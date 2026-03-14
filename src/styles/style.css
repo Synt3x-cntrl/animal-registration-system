@@ -1,0 +1,97 @@
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+}
+
+/* TOP HEADER */
+.top-header {
+  display: flex;
+  background: black;
+  color: white;
+}
+
+.logo {
+  background: orange;
+  padding: 15px 30px;
+  font-weight: bold;
+}
+
+.top-item {
+  padding: 15px 30px;
+}
+
+/* MENU */
+.menu {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  padding: 15px;
+}
+
+.menu a {
+  background: #5b5bd6;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 10px;
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.menu a:hover {
+  background: #4747c2;
+}
+
+/* CONTENT */
+.content {
+  margin-top: 40px;
+  text-align: center;
+  font-size: 22px;
+}
+.top-header {
+  background: black;
+}
+
+.top-nav {
+  display: flex;
+  position: relative;
+}
+
+/* links */
+.top-link {
+  color: white;
+  text-decoration: none;
+  padding: 15px 30px;
+  position: relative;
+  z-index: 1;
+}
+
+/* SLIDER */
+.slider {
+  position: absolute;
+  bottom: 0;
+  height: 4px;
+  background: yellow;
+  border-radius: 2px;
+  transition: all 0.3s ease;
+}
+
+/* POSITION CONTROL */
+.top-link:nth-child(1).active ~ .slider {
+  left: 0;
+  width: 90px;
+}
+
+.top-link:nth-child(2).active ~ .slider {
+  left: 90px;
+  width: 140px;
+}
+
+.top-link:nth-child(3).active ~ .slider {
+  left: 230px;
+  width: 160px;
+}
+
+.top-link:nth-child(4).active ~ .slider {
+  left: 390px;
+  width: 130px;
+}
