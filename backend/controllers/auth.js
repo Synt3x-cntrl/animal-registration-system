@@ -1,7 +1,5 @@
-const { admin } = require("../db");
+const { admin, db } = require("../db");
 const bcrypt = require("bcryptjs");
-
-const db = admin.database();
 
 exports.register = async (req, res, next) => {
     try {

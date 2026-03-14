@@ -24,9 +24,15 @@ function Login() {
       // OR better, since their UID is their Firestore ID, we can fetch the user directly if we had a dedicated route.
       // For now, let's fetch all users, it's a small app.
       const usersResponse = await fetch(`${API_URL}/auth/users`);
+      
+      if (!usersResponse.ok) {
+        const errorText = await usersResponse.text();
+        throw new Error(`Сервер дээр алдаа гарлаа: ${usersResponse.status} ${errorText.substring(0, 100)}`);
+      }
+
       const usersData = await usersResponse.json();
 
-      if (usersResponse.ok && usersData.data) {
+      if (usersData.data) {
         const customUser = usersData.data.find(u => u.email === email);
 
         if (customUser) {

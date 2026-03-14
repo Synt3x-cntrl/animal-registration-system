@@ -1,6 +1,4 @@
-const { admin } = require("../db");
-
-const db = admin.database();
+const { admin, db } = require("../db");
 
 // @desc    Цаг шинээр захиалах
 // @route   POST /api/v1/appointments

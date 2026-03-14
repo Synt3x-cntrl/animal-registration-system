@@ -1,6 +1,4 @@
-const { admin } = require("../db");
-
-const db = admin.database();
+const { admin, db } = require("../db");
 
 // @desc    Эмч өөрийн боломжтой цагийг нэмэх
 // @route   POST /api/v1/doctor-schedules

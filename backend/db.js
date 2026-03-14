@@ -55,11 +55,34 @@ try {
 
 const connectDB = async () => {
   if (admin.apps.length) {
-    console.log(`Firebase гэрээ амжилттай холбогдлоо.`);
+    console.log(`Firebase Realtime Database холбогдлоо.`);
   } else {
-    console.log('Firebase холбогдож чадсангүй. Та firebaseServiceAccountKey.json файлаа backend фолдерт хийсэн эсэхээ шалгана уу эсвэл Vercel дээр Environment Variable тохируулна уу.');
+    console.log('Firebase холбогдож чадсангүй.');
+    if (process.env.NODE_ENV === 'production') {
+      console.log('Vercel дээр Environment Variables (FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY) тохируулсан эсэхээ шалгана уу.');
+    } else {
+      console.log('Та firebaseServiceAccountKey.json файлаа backend фолдерт хийсэн эсэхээ шалгана уу.');
+    }
   }
 };
 
-const db = admin.database();
-module.exports = { connectDB, admin };
+let db;
+try {
+  if (admin.apps.length) {
+    db = admin.database();
+  } else {
+    // Provide a helpful object that throws clear errors if used
+    db = {
+      ref: () => { 
+        throw new Error("Өгөгдлийн сантай холбогдож чадсангүй. Vercel дээр Environment Variables (FIREBASE_PRIVATE_KEY г.м) тохируулсан эсэхээ шалгана уу."); 
+      }
+    };
+  }
+} catch (e) {
+  console.error("Error accessing Firebase database:", e.message);
+  db = {
+    ref: () => { throw new Error("Firebase-д хандахад алдаа гарлаа: " + e.message); }
+  };
+}
+
+module.exports = { connectDB, admin, db };

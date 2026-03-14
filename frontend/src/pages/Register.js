@@ -37,16 +37,25 @@ function Register() {
                 }),
             });
 
+            if (!response.ok) {
+                const errorText = await response.text();
+                let errorData;
+                try {
+                    errorData = JSON.parse(errorText);
+                } catch (e) {
+                    throw new Error(`Сервер дээр алдаа гарлаа: ${response.status}. ${errorText.substring(0, 100)}`);
+                }
+                throw new Error(errorData.error || "Бүртгэл хийхэд алдаа гарлаа");
+            }
+
             const data = await response.json();
 
             if (response.ok) {
                 alert("Амжилттай бүртгэгдлээ. Одоо нэвтэрч орно уу.");
                 navigate("/login");
-            } else {
-                alert("Алдаа гарлаа: " + data.error);
             }
         } catch (error) {
-            alert("Сервертэй холбогдоход алдаа гарлаа: " + error.message);
+            alert("Алдаа гарлаа: " + error.message);
         }
     };
 
