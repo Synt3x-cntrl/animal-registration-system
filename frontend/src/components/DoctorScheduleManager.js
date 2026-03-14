@@ -7,12 +7,6 @@ function DoctorScheduleManager({ doctorId }) {
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState({ type: "", text: "" });
 
-    useEffect(() => {
-        if (doctorId) {
-            fetchSchedules();
-        }
-    }, [doctorId, fetchSchedules]);
-
     const fetchSchedules = useCallback(async () => {
         try {
             const response = await fetch(`http://localhost:4000/api/v1/doctor-schedules/${doctorId}?isBooked=false`);
@@ -24,6 +18,12 @@ function DoctorScheduleManager({ doctorId }) {
             console.error("Цагийн хуваарь татахад алдаа гарлаа:", error);
         }
     }, [doctorId]);
+
+    useEffect(() => {
+        if (doctorId) {
+            fetchSchedules();
+        }
+    }, [doctorId, fetchSchedules]);
 
     const handleAddSchedule = async (e) => {
         e.preventDefault();

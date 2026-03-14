@@ -6,12 +6,6 @@ const DoctorMedicalHistory = ({ doctorName }) => {
     const [loading, setLoading] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
 
-    useEffect(() => {
-        if (doctorName) {
-            fetchRecords();
-        }
-    }, [doctorName, fetchRecords]);
-
     const fetchRecords = useCallback(async () => {
         setLoading(true);
         try {
@@ -28,6 +22,12 @@ const DoctorMedicalHistory = ({ doctorName }) => {
             setLoading(false);
         }
     }, [doctorName]);
+
+    useEffect(() => {
+        if (doctorName) {
+            fetchRecords();
+        }
+    }, [doctorName, fetchRecords]);
 
     const handleSearch = (e) => {
         const q = e.target.value.toLowerCase();

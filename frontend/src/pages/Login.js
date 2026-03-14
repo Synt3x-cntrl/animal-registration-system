@@ -1,6 +1,6 @@
 import "../styles/style.css";
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 import MyInput from "../components/MyInput";
 import MyButton from "../components/My_button";
 

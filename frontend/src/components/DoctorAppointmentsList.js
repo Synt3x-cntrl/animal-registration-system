@@ -4,12 +4,6 @@ const DoctorAppointmentsList = ({ doctorId, onAppointmentClick }) => {
     const [appointments, setAppointments] = useState([]);
     const [loading, setLoading] = useState(false);
 
-    useEffect(() => {
-        if (doctorId) {
-            fetchAppointments();
-        }
-    }, [doctorId, fetchAppointments]);
-
     const fetchAppointments = useCallback(async () => {
         setLoading(true);
         try {
@@ -24,6 +18,12 @@ const DoctorAppointmentsList = ({ doctorId, onAppointmentClick }) => {
             setLoading(false);
         }
     }, [doctorId]);
+
+    useEffect(() => {
+        if (doctorId) {
+            fetchAppointments();
+        }
+    }, [doctorId, fetchAppointments]);
 
     return (
         <div style={{
