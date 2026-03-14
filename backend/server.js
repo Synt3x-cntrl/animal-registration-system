@@ -19,6 +19,10 @@ app.use("/api/v1/medical-records", medicalRecordsRouter);
 app.use("/api/v1/appointments", appointmentsRouter);
 app.use("/api/v1/doctor-schedules", doctorSchedulesRouter);
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Express server ${PORT} порт дээр аслаа.`);
-});
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(PORT, () => {
+    console.log(`Express server ${PORT} порт дээр аслаа.`);
+  });
+}
+
+module.exports = app;
