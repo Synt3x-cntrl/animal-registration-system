@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 
 const DoctorAppointmentsList = ({ doctorId, onAppointmentClick }) => {
     const [appointments, setAppointments] = useState([]);
@@ -8,9 +8,9 @@ const DoctorAppointmentsList = ({ doctorId, onAppointmentClick }) => {
         if (doctorId) {
             fetchAppointments();
         }
-    }, [doctorId]);
+    }, [doctorId, fetchAppointments]);
 
-    const fetchAppointments = async () => {
+    const fetchAppointments = useCallback(async () => {
         setLoading(true);
         try {
             const response = await fetch(`http://localhost:4000/api/v1/appointments/doctor/${doctorId}`);
@@ -23,7 +23,7 @@ const DoctorAppointmentsList = ({ doctorId, onAppointmentClick }) => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [doctorId]);
 
     return (
         <div style={{

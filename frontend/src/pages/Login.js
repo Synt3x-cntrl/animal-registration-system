@@ -7,7 +7,6 @@ import MyButton from "../components/My_button";
 function Login() {
   const [email, setEmail] = useState("");
   const [upass, setPass] = useState("");
-  const navigate = useNavigate();
 
   const handleLogin = async () => {
     try {
@@ -15,8 +14,7 @@ function Login() {
       const { signInWithEmailAndPassword } = await import("firebase/auth");
       const { auth } = await import("../firebase");
 
-      const userCredential = await signInWithEmailAndPassword(auth, email, upass);
-      const firebaseUser = userCredential.user;
+      await signInWithEmailAndPassword(auth, email, upass);
 
       // 2. Fetch the extra user data (like role, firstname, etc.) from our backend
       // Since we don't have a GET /user/:email, we can fetch all users or we can just send a fast request 

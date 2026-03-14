@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 
 function DoctorScheduleManager({ doctorId }) {
     const [schedules, setSchedules] = useState([]);
@@ -11,9 +11,9 @@ function DoctorScheduleManager({ doctorId }) {
         if (doctorId) {
             fetchSchedules();
         }
-    }, [doctorId]);
+    }, [doctorId, fetchSchedules]);
 
-    const fetchSchedules = async () => {
+    const fetchSchedules = useCallback(async () => {
         try {
             const response = await fetch(`http://localhost:4000/api/v1/doctor-schedules/${doctorId}?isBooked=false`);
             const data = await response.json();
@@ -23,7 +23,7 @@ function DoctorScheduleManager({ doctorId }) {
         } catch (error) {
             console.error("Цагийн хуваарь татахад алдаа гарлаа:", error);
         }
-    };
+    }, [doctorId]);
 
     const handleAddSchedule = async (e) => {
         e.preventDefault();

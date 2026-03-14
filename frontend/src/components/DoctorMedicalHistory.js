@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 
 const DoctorMedicalHistory = ({ doctorName }) => {
     const [records, setRecords] = useState([]);
@@ -10,9 +10,9 @@ const DoctorMedicalHistory = ({ doctorName }) => {
         if (doctorName) {
             fetchRecords();
         }
-    }, [doctorName]);
+    }, [doctorName, fetchRecords]);
 
-    const fetchRecords = async () => {
+    const fetchRecords = useCallback(async () => {
         setLoading(true);
         try {
             const encoded = encodeURIComponent(doctorName);
@@ -27,7 +27,7 @@ const DoctorMedicalHistory = ({ doctorName }) => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [doctorName]);
 
     const handleSearch = (e) => {
         const q = e.target.value.toLowerCase();
