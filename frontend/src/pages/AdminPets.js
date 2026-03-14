@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import API_URL from "../apiConfig";
 
 function AdminPets() {
     const [user, setUser] = useState(null);
@@ -10,7 +11,7 @@ function AdminPets() {
     const fetchPets = async () => {
         setLoading(true);
         try {
-            const response = await fetch("http://localhost:4000/api/v1/pets");
+            const response = await fetch(`${API_URL}/pets`);
             const data = await response.json();
             if (response.ok) {
                 setPetsList(data.data);
@@ -48,7 +49,7 @@ function AdminPets() {
     const handleDeletePet = async (id) => {
         if (window.confirm("Энэ амьтныг устгахдаа итгэлтэй байна уу?")) {
             try {
-                const response = await fetch(`http://localhost:4000/api/v1/pets/${id}`, {
+                const response = await fetch(`${API_URL}/pets/${id}`, {
                     method: "DELETE",
                 });
                 if (response.ok) {

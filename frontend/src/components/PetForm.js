@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import API_URL from '../apiConfig';
 
 const PetForm = ({ onPetAdded, userId }) => {
     const [formData, setFormData] = useState({
@@ -22,7 +23,7 @@ const PetForm = ({ onPetAdded, userId }) => {
         setError(null);
 
         try {
-            const response = await fetch("http://localhost:4000/api/v1/pets", {
+            const response = await fetch(`${API_URL}/pets`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

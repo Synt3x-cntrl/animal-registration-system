@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import API_URL from '../apiConfig';
 
 const AppointmentForm = ({ ownerId, onAppointmentAdded }) => {
     const [doctors, setDoctors] = useState([]);
@@ -36,7 +37,7 @@ const AppointmentForm = ({ ownerId, onAppointmentAdded }) => {
             // or we might need to create it. We will use a mock fetching approach for now 
             // assuming the backend has a way or we will add one.
             // Let's assume we add `GET /auth/users?role=doctor` or similar.
-            const response = await fetch("http://localhost:4000/api/v1/auth/users");
+            const response = await fetch(`${API_URL}/auth/users`);
             const data = await response.json();
             if (response.ok && data.data) {
                 const docs = data.data.filter(u => u.role === 'doctor');
@@ -49,7 +50,7 @@ const AppointmentForm = ({ ownerId, onAppointmentAdded }) => {
 
     const fetchSchedules = async (docId) => {
         try {
-            const response = await fetch(`http://localhost:4000/api/v1/doctor-schedules/${docId}?isBooked=false`);
+            const response = await fetch(`${API_URL}/doctor-schedules/${docId}?isBooked=false`);
             const data = await response.json();
             if (response.ok) {
                 setSchedules(data.data);
@@ -76,7 +77,7 @@ const AppointmentForm = ({ ownerId, onAppointmentAdded }) => {
         }
 
         try {
-            const response = await fetch("http://localhost:4000/api/v1/appointments", {
+            const response = await fetch(`${API_URL}/appointments`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

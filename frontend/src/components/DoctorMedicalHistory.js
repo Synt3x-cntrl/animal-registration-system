@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import API_URL from '../apiConfig';
 
 const DoctorMedicalHistory = ({ doctorName }) => {
     const [records, setRecords] = useState([]);
@@ -10,7 +11,7 @@ const DoctorMedicalHistory = ({ doctorName }) => {
         setLoading(true);
         try {
             const encoded = encodeURIComponent(doctorName);
-            const res = await fetch(`http://localhost:4000/api/v1/medical-records/doctor/${encoded}`);
+            const res = await fetch(`${API_URL}/medical-records/doctor/${encoded}`);
             const data = await res.json();
             if (res.ok) {
                 setRecords(data.data);

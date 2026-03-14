@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import PetCard from "../components/PetCard";
 import PetForm from "../components/PetForm";
+import API_URL from "../apiConfig";
 
 function MyPets() {
     const [user, setUser] = useState(null);
@@ -21,7 +22,7 @@ function MyPets() {
     const fetchPets = async (userId) => {
         setLoadingPets(true);
         try {
-            const response = await fetch(`http://localhost:4000/api/v1/pets/user/${userId}`);
+            const response = await fetch(`${API_URL}/pets/user/${userId}`);
             const data = await response.json();
             if (response.ok) {
                 setPets(data.data);

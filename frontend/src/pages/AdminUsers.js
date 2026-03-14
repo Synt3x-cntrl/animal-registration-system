@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import API_URL from "../apiConfig";
 
 function AdminUsers() {
     const [user, setUser] = useState(null);
@@ -13,7 +14,7 @@ function AdminUsers() {
     const fetchUsers = async () => {
         setLoading(true);
         try {
-            const response = await fetch("http://localhost:4000/api/v1/auth/users");
+            const response = await fetch(`${API_URL}/auth/users`);
             const data = await response.json();
             if (response.ok) {
                 setUsersList(data.data);
@@ -51,7 +52,7 @@ function AdminUsers() {
     const handleDeleteUser = async (id) => {
         if (window.confirm("Энэ хэрэглэгчийг устгахдаа итгэлтэй байна уу?")) {
             try {
-                const response = await fetch(`http://localhost:4000/api/v1/auth/users/${id}`, {
+                const response = await fetch(`${API_URL}/auth/users/${id}`, {
                     method: "DELETE",
                 });
                 if (response.ok) {
@@ -87,7 +88,7 @@ function AdminUsers() {
                 delete updateData.password;
             }
 
-            const response = await fetch(`http://localhost:4000/api/v1/auth/users/${editingUser._id}`, {
+            const response = await fetch(`${API_URL}/auth/users/${editingUser._id}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(updateData)

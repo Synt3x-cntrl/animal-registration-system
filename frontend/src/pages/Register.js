@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import MyInput from "../components/MyInput";
 import MyButton from "../components/My_button";
+import API_URL from "../apiConfig";
 
 function Register() {
     const [firstname, setFirstname] = useState("");
@@ -22,7 +23,7 @@ function Register() {
 
         try {
             // Registering via our backend creates the user in BOTH Firebase Auth and Firestore.
-            const response = await fetch("http://localhost:4000/api/v1/auth/register", {
+            const response = await fetch(`${API_URL}/auth/register`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import API_URL from '../apiConfig';
 
 const DoctorAppointmentsList = ({ doctorId, onAppointmentClick }) => {
     const [appointments, setAppointments] = useState([]);
@@ -7,7 +8,7 @@ const DoctorAppointmentsList = ({ doctorId, onAppointmentClick }) => {
     const fetchAppointments = useCallback(async () => {
         setLoading(true);
         try {
-            const response = await fetch(`http://localhost:4000/api/v1/appointments/doctor/${doctorId}`);
+            const response = await fetch(`${API_URL}/appointments/doctor/${doctorId}`);
             const data = await response.json();
             if (response.ok) {
                 setAppointments(data.data);

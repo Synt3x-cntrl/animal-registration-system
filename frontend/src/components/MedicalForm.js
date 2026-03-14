@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import API_URL from '../apiConfig';
 
 const MedicalForm = ({ onSuccess, prefillData, doctorName }) => {
     const [formData, setFormData] = useState({
@@ -47,7 +48,7 @@ const MedicalForm = ({ onSuccess, prefillData, doctorName }) => {
         setError(null);
 
         try {
-            const response = await fetch("http://localhost:4000/api/v1/medical-records", {
+            const response = await fetch(`${API_URL}/medical-records`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -60,7 +61,7 @@ const MedicalForm = ({ onSuccess, prefillData, doctorName }) => {
             if (response.ok) {
                 // Захиалгыг устгах
                 if (prefillData?._id) {
-                    await fetch(`http://localhost:4000/api/v1/appointments/${prefillData._id}`, {
+                    await fetch(`${API_URL}/appointments/${prefillData._id}`, {
                         method: "DELETE",
                     });
                 }

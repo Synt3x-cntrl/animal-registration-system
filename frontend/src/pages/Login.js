@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import MyInput from "../components/MyInput";
 import MyButton from "../components/My_button";
+import API_URL from "../apiConfig";
 
 function Login() {
   const [email, setEmail] = useState("");
@@ -22,7 +23,7 @@ function Login() {
       // Easiest hack without changing much backend: Fetch all users and find the one with this email (if small DB),
       // OR better, since their UID is their Firestore ID, we can fetch the user directly if we had a dedicated route.
       // For now, let's fetch all users, it's a small app.
-      const usersResponse = await fetch("http://localhost:4000/api/v1/auth/users");
+      const usersResponse = await fetch(`${API_URL}/auth/users`);
       const usersData = await usersResponse.json();
 
       if (usersResponse.ok && usersData.data) {

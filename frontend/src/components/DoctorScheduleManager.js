@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import API_URL from "../apiConfig";
 
 function DoctorScheduleManager({ doctorId }) {
     const [schedules, setSchedules] = useState([]);
@@ -9,7 +10,7 @@ function DoctorScheduleManager({ doctorId }) {
 
     const fetchSchedules = useCallback(async () => {
         try {
-            const response = await fetch(`http://localhost:4000/api/v1/doctor-schedules/${doctorId}?isBooked=false`);
+            const response = await fetch(`${API_URL}/doctor-schedules/${doctorId}?isBooked=false`);
             const data = await response.json();
             if (response.ok) {
                 setSchedules(data.data);
@@ -40,7 +41,7 @@ function DoctorScheduleManager({ doctorId }) {
         const combinedDateTime = new Date(`${date}T${time}:00`);
 
         try {
-            const response = await fetch(`http://localhost:4000/api/v1/doctor-schedules`, {
+            const response = await fetch(`${API_URL}/doctor-schedules`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ doctorId, date: combinedDateTime.toISOString() }),
@@ -64,7 +65,7 @@ function DoctorScheduleManager({ doctorId }) {
         if (!window.confirm("Энэ цагийг устгахдаа итгэлтэй байна уу?")) return;
 
         try {
-            const response = await fetch(`http://localhost:4000/api/v1/doctor-schedules/${scheduleId}`, {
+            const response = await fetch(`${API_URL}/doctor-schedules/${scheduleId}`, {
                 method: "DELETE",
             });
             if (response.ok) {

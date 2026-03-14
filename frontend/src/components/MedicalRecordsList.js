@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import API_URL from '../apiConfig';
 
 const MedicalRecordsList = ({ userId }) => {
     const [records, setRecords] = useState([]);
@@ -7,7 +8,7 @@ const MedicalRecordsList = ({ userId }) => {
     useEffect(() => {
         const fetchRecords = async () => {
             try {
-                const response = await fetch(`http://localhost:4000/api/v1/medical-records/user/${userId}`);
+                const response = await fetch(`${API_URL}/medical-records/user/${userId}`);
                 const data = await response.json();
                 if (response.ok) {
                     setRecords(data.data);
