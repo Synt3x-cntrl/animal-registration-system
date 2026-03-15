@@ -34,8 +34,8 @@ app.get("/api/v1/health", (req, res) => {
   });
 });
 
-// 404 Handler for API
-app.use("/api/v1/*", (req, res) => {
+// 404 Handler for API (Express 5 compatible)
+app.use("/api/v1", (req, res) => {
   res.status(404).json({
     success: false,
     error: `API path ${req.originalUrl} not found`
