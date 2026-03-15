@@ -41,8 +41,19 @@ try {
     console.log("Formatted private key length:", serviceAccount.privateKey.length);
     console.log("Starts with BEGIN:", serviceAccount.privateKey.startsWith('-----BEGIN PRIVATE KEY-----'));
     console.log("Ends with END:", serviceAccount.privateKey.trim().endsWith('-----END PRIVATE KEY-----'));
+
+    if (!serviceAccount.projectId || !serviceAccount.clientEmail || !serviceAccount.privateKey) {
+      console.error("Missing critical Firebase env vars:", {
+        projectId: !!serviceAccount.projectId,
+        clientEmail: !!serviceAccount.clientEmail,
+        privateKey: !!serviceAccount.privateKey
+      });
+    }
   } else {
-    throw new Error('Firebase credentials not found (no JSON file and no env vars)');
+    console.warn('Firebase credentials not found (no JSON file and no env vars)');
+    if (process.env.VERCEL) {
+      console.error('CRITICAL: Environment variables are likely not set in Vercel Dashboard');
+    }
   }
 
   if (serviceAccount && !admin.apps.length) {

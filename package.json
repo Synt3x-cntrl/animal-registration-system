@@ -4,6 +4,13 @@
   "engines": {
     "node": "20.x"
   },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.6",
+    "dotenv": "^17.2.4",
+    "express": "^5.2.1",
+    "firebase-admin": "^13.7.0"
+  },
   "scripts": {
     "backend": "npm run dev --prefix backend",
     "frontend": "npm start --prefix frontend",

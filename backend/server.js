@@ -34,6 +34,14 @@ app.get("/api/v1/health", (req, res) => {
   });
 });
 
+// 404 Handler for API
+app.use("/api/v1/*", (req, res) => {
+  res.status(404).json({
+    success: false,
+    error: `API path ${req.originalUrl} not found`
+  });
+});
+
 // Global error handler
 app.use((err, req, res, next) => {
   console.error("Unhandled Error:", err);
