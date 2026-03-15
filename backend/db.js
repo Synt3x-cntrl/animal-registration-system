@@ -29,14 +29,43 @@ try {
   } else if (rawKey) {
     console.log("Using Environment Variables for Firebase credentials");
     
-    // Sometimes keys get wrapped in extra quotes in env vars
+    // 1. Basic normalization
     let formattedKey = rawKey.trim();
     if (formattedKey.startsWith('"') && formattedKey.endsWith('"')) {
       formattedKey = formattedKey.slice(1, -1);
     }
     
-    // Essential for RSA keys: replace literal \n with real newlines
+    // 2. Handle literal \n strings (common in Vercel/CI)
     formattedKey = formattedKey.replace(/\\n/g, '\n');
+    
+    // 3. Robust PEM Formatting: Re-wrap if it's all on one line or mangled
+    // PEM keys MUST have newlines every 64 chars to be parsed correctly by some ASN.1 decoders
+    try {
+      const header = "-----BEGIN PRIVATE KEY-----";
+      const footer = "-----END PRIVATE KEY-----";
+      
+      // If it doesn't look like a standard multi-line PEM, re-format it
+      if (!formattedKey.includes('\n') || formattedKey.split('\n').length < 5) {
+        console.log("Re-formatting single-line/mangled private key...");
+        
+        let body = formattedKey;
+        if (body.includes(header)) body = body.split(header)[1];
+        if (body.includes(footer)) body = body.split(footer)[0];
+        
+        // Remove ALL whitespace and existing newlines from the body
+        body = body.replace(/\s+/g, '');
+        
+        // Re-wrap at 64 characters
+        let wrappedBody = "";
+        for (let i = 0; i < body.length; i += 64) {
+          wrappedBody += body.substring(i, i + 64) + "\n";
+        }
+        
+        formattedKey = `${header}\n${wrappedBody}${footer}\n`;
+      }
+    } catch (pemError) {
+      console.warn("PEM formatter encountered an issue, using original formatted key:", pemError.message);
+    }
     
     serviceAccount = {
       projectId: process.env.FIREBASE_PROJECT_ID,
@@ -44,9 +73,10 @@ try {
       privateKey: formattedKey,
     };
     
-    console.log("Formatted private key length:", serviceAccount.privateKey.length);
-    console.log("Starts with BEGIN:", serviceAccount.privateKey.startsWith('-----BEGIN PRIVATE KEY-----'));
-    console.log("Ends with END:", serviceAccount.privateKey.trim().endsWith('-----END PRIVATE KEY-----'));
+    console.log("Final private key length:", serviceAccount.privateKey.length);
+    console.log("Final key starts with BEGIN:", serviceAccount.privateKey.startsWith('-----BEGIN PRIVATE KEY-----'));
+    console.log("Final key ends with END:", serviceAccount.privateKey.trim().endsWith('-----END PRIVATE KEY-----'));
+    console.log("First line of final key:", serviceAccount.privateKey.split('\n')[0]);
 
     if (!serviceAccount.projectId || !serviceAccount.clientEmail || !serviceAccount.privateKey) {
       console.error("Missing critical Firebase env vars:", {
