@@ -48,7 +48,7 @@ function Register() {
                 throw new Error(errorData.error || "Бүртгэл хийхэд алдаа гарлаа");
             }
 
-            const data = await response.json();
+            await response.json();
 
             if (response.ok) {
                 alert("Амжилттай бүртгэгдлээ. Одоо нэвтэрч орно уу.");
