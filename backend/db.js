@@ -8,7 +8,9 @@ try {
   const serviceAccountPath = path.join(__dirname, 'firebaseServiceAccountKey.json');
   
   const dbURL = process.env.FIREBASE_DATABASE_URL || "https://d-yd-ca786-default-rtdb.firebaseio.com";
-  console.log("Checking Firebase env vars...");
+  console.log("--- Firebase Diagnostics ---");
+  console.log("NODE_ENV:", process.env.NODE_ENV);
+  console.log("VERCEL:", !!process.env.VERCEL);
   console.log("FIREBASE_PROJECT_ID found:", !!process.env.FIREBASE_PROJECT_ID);
   console.log("FIREBASE_CLIENT_EMAIL found:", !!process.env.FIREBASE_CLIENT_EMAIL);
   console.log("FIREBASE_PRIVATE_KEY found:", !!process.env.FIREBASE_PRIVATE_KEY);
@@ -16,6 +18,10 @@ try {
 
   let rawKey = process.env.FIREBASE_PRIVATE_KEY || "";
   console.log("FIREBASE_PRIVATE_KEY raw length:", rawKey.length);
+  if (rawKey.length > 0) {
+    console.log("FIREBASE_PRIVATE_KEY starts with:", rawKey.substring(0, 20));
+    console.log("FIREBASE_PRIVATE_KEY ends with:", rawKey.substring(rawKey.length - 20));
+  }
   
   if (fs.existsSync(serviceAccountPath)) {
     console.log("Using local JSON file for Firebase credentials");
@@ -61,21 +67,21 @@ try {
       credential: admin.credential.cert(serviceAccount),
       databaseURL: dbURL
     });
+    console.log("Firebase App initialized successfully.");
   }
 } catch (error) {
-  console.error("Firebase initialization error:", error.message);
+  console.error("Firebase critical error during require/init:", error.stack || error.message);
 }
 
 const connectDB = async () => {
-  if (admin.apps.length) {
-    console.log(`Firebase Realtime Database холбогдлоо.`);
-  } else {
-    console.log('Firebase холбогдож чадсангүй.');
-    if (process.env.NODE_ENV === 'production') {
-      console.log('Vercel дээр Environment Variables (FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY) тохируулсан эсэхээ шалгана уу.');
+  try {
+    if (admin.apps.length) {
+      console.log(`Firebase Realtime Database холбогдлоо.`);
     } else {
-      console.log('Та firebaseServiceAccountKey.json файлаа backend фолдерт хийсэн эсэхээ шалгана уу.');
+      console.warn('Firebase App is not initialized.');
     }
+  } catch (err) {
+    console.error('Error in connectDB:', err.message);
   }
 };
 

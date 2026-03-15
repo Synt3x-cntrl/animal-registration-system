@@ -8,10 +8,22 @@ const appointmentsRouter = require("./Routes/appointments");
 const doctorSchedulesRouter = require("./Routes/doctorSchedules");
 const { connectDB } = require("./db");
 
+// Load environment variables for local development
 if (process.env.NODE_ENV !== "production") {
-  dotenv.config({ path: "./config/config.env" });
+  require("dotenv").config({ path: "./config/config.env" });
 }
-connectDB();
+
+// Basic health check (no DB dependency)
+app.get("/api/v1/basic-health", (req, res) => {
+  res.status(200).json({ status: "ok", message: "Server is alive" });
+});
+
+try {
+  const { connectDB } = require("./db");
+  connectDB();
+} catch (err) {
+  console.error("Failed to load db.js or run connectDB:", err.stack || err.message);
+}
 const app = express();
 app.use(cors());
 app.use(express.json());
