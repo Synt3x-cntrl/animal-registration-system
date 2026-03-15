@@ -23,11 +23,14 @@ app.use("/api/v1/doctor-schedules", doctorSchedulesRouter);
 
 // Health check route
 app.get("/api/v1/health", (req, res) => {
+  const { admin } = require("./db");
   res.status(200).json({
     success: true,
     message: "Backend server is running correctly",
+    firebaseConnected: admin.apps.length > 0,
     timestamp: new Date().toISOString(),
-    env: process.env.NODE_ENV
+    env: process.env.NODE_ENV,
+    vercel: !!process.env.VERCEL
   });
 });
 
