@@ -1,21 +1,23 @@
 const express = require("express");
-const dotenv = require("dotenv");
 const cors = require("cors");
+const path = require("path");
+
+// Load environment variables IMMEDIATELY (before other local imports)
+if (process.env.NODE_ENV !== "production") {
+  require("dotenv").config({ path: path.join(__dirname, "config/config.env") });
+}
+
 const authRouter = require("./Routes/auth");
 const petsRouter = require("./Routes/pets");
 const medicalRecordsRouter = require("./Routes/medicalRecords");
 const appointmentsRouter = require("./Routes/appointments");
+const adminRouter = require("./Routes/admin");
 const doctorSchedulesRouter = require("./Routes/doctorSchedules");
 const { connectDB } = require("./db");
 
 const app = express();
 app.use(cors());
 app.use(express.json());
-
-// Load environment variables for local development
-if (process.env.NODE_ENV !== "production") {
-  require("dotenv").config({ path: "./config/config.env" });
-}
 
 // Basic health check (no DB dependency)
 app.get("/api/v1/basic-health", (req, res) => {
