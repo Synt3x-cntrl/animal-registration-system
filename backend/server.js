@@ -4,7 +4,9 @@ const path = require("path");
 
 // Load environment variables IMMEDIATELY (before other local imports)
 if (process.env.NODE_ENV !== "production") {
-  require("dotenv").config({ path: path.join(__dirname, "config/config.env") });
+  const envPath = path.join(__dirname, "config/config.env");
+  console.log("Loading env from:", envPath);
+  require("dotenv").config({ path: envPath });
 }
 
 const authRouter = require("./Routes/auth");
@@ -64,9 +66,9 @@ app.use((err, req, res, next) => {
     error: err.message || "Дотоод серверт алдаа гарлаа (Server Error)",
   });
 });
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 4000;
 // Only start the server locally or in non-serverless environments
-if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
+if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
   app.listen(PORT, () => {
     console.log(`Express server ${PORT} порт дээр аслаа.`);
   });
