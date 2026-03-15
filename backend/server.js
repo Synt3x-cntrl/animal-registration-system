@@ -13,7 +13,6 @@ const authRouter = require("./Routes/auth");
 const petsRouter = require("./Routes/pets");
 const medicalRecordsRouter = require("./Routes/medicalRecords");
 const appointmentsRouter = require("./Routes/appointments");
-const adminRouter = require("./Routes/admin");
 const doctorSchedulesRouter = require("./Routes/doctorSchedules");
 const { connectDB } = require("./db");
 
@@ -31,6 +30,7 @@ try {
 } catch (err) {
   console.error("Failed to run connectDB:", err.stack || err.message);
 }
+
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/pets", petsRouter);
 app.use("/api/v1/medical-records", medicalRecordsRouter);
@@ -66,6 +66,7 @@ app.use((err, req, res, next) => {
     error: err.message || "Дотоод серверт алдаа гарлаа (Server Error)",
   });
 });
+
 const PORT = process.env.PORT || 4000;
 // Only start the server locally or in non-serverless environments
 if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {

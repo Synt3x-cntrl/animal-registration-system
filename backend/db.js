@@ -106,12 +106,20 @@ try {
 const connectDB = async () => {
   try {
     if (admin.apps.length) {
-      console.log(`Firebase Realtime Database холбогдлоо.`);
+      // Test the connection by trying to read the root metadata or users
+      console.log("Testing Firebase connection...");
+      await admin.database().ref(".info/connected").once("value", (snap) => {
+        if (snap.val() === true) {
+          console.log("Firebase Realtime Database холбогдлоо (холболт амжилттай).");
+        } else {
+          console.log("Firebase холболт хүлээгдэж байна...");
+        }
+      });
     } else {
       console.warn('Firebase App is not initialized.');
     }
   } catch (err) {
-    console.error('Error in connectDB:', err.message);
+    console.error('Firebase connection test failed:', err.message);
   }
 };
 
