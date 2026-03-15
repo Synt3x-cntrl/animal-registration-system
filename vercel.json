@@ -2,7 +2,7 @@
   "version": 2,
   "functions": {
     "backend/server.js": {
-      "runtime": "@vercel/node"
+      "runtime": "node.js"
     }
   },
   "rewrites": [
@@ -12,11 +12,11 @@
     },
     {
       "source": "/static/(.*)",
-      "destination": "/frontend/static/$1"
+      "destination": "/frontend/build/static/$1"
     },
     {
       "source": "/(.*)",
-      "destination": "/frontend/index.html"
+      "destination": "/frontend/build/index.html"
     }
   ]
 }

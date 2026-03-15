@@ -7,10 +7,12 @@ try {
   let serviceAccount;
   const serviceAccountPath = path.join(__dirname, 'firebaseServiceAccountKey.json');
   
+  const dbURL = process.env.FIREBASE_DATABASE_URL || "https://d-yd-ca786-default-rtdb.firebaseio.com";
   console.log("Checking Firebase env vars...");
   console.log("FIREBASE_PROJECT_ID found:", !!process.env.FIREBASE_PROJECT_ID);
   console.log("FIREBASE_CLIENT_EMAIL found:", !!process.env.FIREBASE_CLIENT_EMAIL);
   console.log("FIREBASE_PRIVATE_KEY found:", !!process.env.FIREBASE_PRIVATE_KEY);
+  console.log("FIREBASE_DATABASE_URL found:", !!process.env.FIREBASE_DATABASE_URL);
 
   let rawKey = process.env.FIREBASE_PRIVATE_KEY || "";
   console.log("FIREBASE_PRIVATE_KEY raw length:", rawKey.length);
@@ -46,7 +48,7 @@ try {
   if (serviceAccount && !admin.apps.length) {
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),
-      databaseURL: "https://d-yd-ca786-default-rtdb.firebaseio.com"
+      databaseURL: dbURL
     });
   }
 } catch (error) {
