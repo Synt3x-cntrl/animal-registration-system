@@ -1,6 +1,9 @@
 {
   "name": "amitani-delguur-root",
   "version": "1.0.0",
+  "engines": {
+    "node": "20.x"
+  },
   "scripts": {
     "backend": "npm run dev --prefix backend",
     "frontend": "npm start --prefix frontend",
