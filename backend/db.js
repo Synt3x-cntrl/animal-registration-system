@@ -8,88 +8,45 @@ try {
   const serviceAccountPath = path.join(__dirname, 'firebaseServiceAccountKey.json');
   
   const dbURL = process.env.FIREBASE_DATABASE_URL || "https://d-yd-ca786-default-rtdb.firebaseio.com";
-  console.log("--- Firebase Diagnostics ---");
-  console.log("NODE_ENV:", process.env.NODE_ENV);
-  console.log("VERCEL:", !!process.env.VERCEL);
-  console.log("FIREBASE_PROJECT_ID found:", !!process.env.FIREBASE_PROJECT_ID);
-  console.log("FIREBASE_CLIENT_EMAIL found:", !!process.env.FIREBASE_CLIENT_EMAIL);
-  console.log("FIREBASE_PRIVATE_KEY found:", !!process.env.FIREBASE_PRIVATE_KEY);
-  console.log("FIREBASE_DATABASE_URL found:", !!process.env.FIREBASE_DATABASE_URL);
-
+  console.log("--- Firebase Diagnostics v2 ---");
+  console.log("FIREBASE_PROJECT_ID:", !!process.env.FIREBASE_PROJECT_ID);
+  
   let rawKey = process.env.FIREBASE_PRIVATE_KEY || "";
-  console.log("FIREBASE_PRIVATE_KEY raw length:", rawKey.length);
-  if (rawKey.length > 0) {
-    console.log("FIREBASE_PRIVATE_KEY starts with:", rawKey.substring(0, 20));
-    console.log("FIREBASE_PRIVATE_KEY ends with:", rawKey.substring(rawKey.length - 20));
-  }
+  console.log("Raw Key Length:", rawKey.length);
   
   if (fs.existsSync(serviceAccountPath)) {
-    console.log("Using local JSON file for Firebase credentials");
+    console.log("Using local JSON file");
     serviceAccount = require(serviceAccountPath);
   } else if (rawKey) {
-    console.log("Using Environment Variables for Firebase credentials");
+    console.log("Using Environment Variables");
     
-    // 1. Basic normalization
-    let formattedKey = rawKey.trim();
-    if (formattedKey.startsWith('"') && formattedKey.endsWith('"')) {
-      formattedKey = formattedKey.slice(1, -1);
+    // 1. Strip all literal "\n" and real newlines/spaces to get the raw content
+    let cleanKey = rawKey.replace(/\\n/g, '').replace(/\s+/g, '');
+    
+    // 2. Identify the Base64 body
+    const header = "-----BEGINPRIVATEKEY-----";
+    const footer = "-----ENDPRIVATEKEY-----";
+    
+    let body = cleanKey;
+    if (body.includes(header)) body = body.split(header)[1];
+    if (body.includes(footer)) body = body.split(footer)[0];
+    
+    // 3. Re-construct the PEM with EXACT formatting required by ASN.1 decoders
+    let formattedKey = "-----BEGIN PRIVATE KEY-----\n";
+    for (let i = 0; i < body.length; i += 64) {
+      formattedKey += body.substring(i, i + 64) + "\n";
     }
+    formattedKey += "-----END PRIVATE KEY-----\n";
     
-    // 2. Handle literal \n strings (common in Vercel/CI)
-    formattedKey = formattedKey.replace(/\\n/g, '\n');
-    
-    // 3. Robust PEM Formatting: Re-wrap if it's all on one line or mangled
-    // PEM keys MUST have newlines every 64 chars to be parsed correctly by some ASN.1 decoders
-    try {
-      const header = "-----BEGIN PRIVATE KEY-----";
-      const footer = "-----END PRIVATE KEY-----";
-      
-      // If it doesn't look like a standard multi-line PEM, re-format it
-      if (!formattedKey.includes('\n') || formattedKey.split('\n').length < 5) {
-        console.log("Re-formatting single-line/mangled private key...");
-        
-        let body = formattedKey;
-        if (body.includes(header)) body = body.split(header)[1];
-        if (body.includes(footer)) body = body.split(footer)[0];
-        
-        // Remove ALL whitespace and existing newlines from the body
-        body = body.replace(/\s+/g, '');
-        
-        // Re-wrap at 64 characters
-        let wrappedBody = "";
-        for (let i = 0; i < body.length; i += 64) {
-          wrappedBody += body.substring(i, i + 64) + "\n";
-        }
-        
-        formattedKey = `${header}\n${wrappedBody}${footer}\n`;
-      }
-    } catch (pemError) {
-      console.warn("PEM formatter encountered an issue, using original formatted key:", pemError.message);
-    }
+    console.log("Formatted Key Length:", formattedKey.length);
+    console.log("Key Check - BEGIN:", formattedKey.startsWith("-----BEGIN PRIVATE KEY-----"));
+    console.log("Key Check - END:", formattedKey.trim().endsWith("-----END PRIVATE KEY-----"));
     
     serviceAccount = {
       projectId: process.env.FIREBASE_PROJECT_ID,
       clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
       privateKey: formattedKey,
     };
-    
-    console.log("Final private key length:", serviceAccount.privateKey.length);
-    console.log("Final key starts with BEGIN:", serviceAccount.privateKey.startsWith('-----BEGIN PRIVATE KEY-----'));
-    console.log("Final key ends with END:", serviceAccount.privateKey.trim().endsWith('-----END PRIVATE KEY-----'));
-    console.log("First line of final key:", serviceAccount.privateKey.split('\n')[0]);
-
-    if (!serviceAccount.projectId || !serviceAccount.clientEmail || !serviceAccount.privateKey) {
-      console.error("Missing critical Firebase env vars:", {
-        projectId: !!serviceAccount.projectId,
-        clientEmail: !!serviceAccount.clientEmail,
-        privateKey: !!serviceAccount.privateKey
-      });
-    }
-  } else {
-    console.warn('Firebase credentials not found (no JSON file and no env vars)');
-    if (process.env.VERCEL) {
-      console.error('CRITICAL: Environment variables are likely not set in Vercel Dashboard');
-    }
   }
 
   if (serviceAccount && !admin.apps.length) {
@@ -100,7 +57,7 @@ try {
     console.log("Firebase App initialized successfully.");
   }
 } catch (error) {
-  console.error("Firebase critical error during require/init:", error.stack || error.message);
+  console.error("Firebase Initialization Error:", error.message);
 }
 
 // Helper to test if we can actually read from the DB
