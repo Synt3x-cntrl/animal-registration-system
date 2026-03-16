@@ -103,23 +103,35 @@ try {
   console.error("Firebase critical error during require/init:", error.stack || error.message);
 }
 
+// Helper to test if we can actually read from the DB
+const testDatabaseConnection = async () => {
+    try {
+        if (!admin.apps.length) return { connected: false, error: "Firebase not initialized" };
+        
+        // Try to read a small piece of data (the '.info/connected' is a special internal ref)
+        const snapshot = await admin.database().ref(".info/connected").once("value");
+        return { 
+            connected: true, 
+            value: snapshot.val(),
+            timestamp: new Date().toISOString()
+        };
+    } catch (err) {
+        return { connected: false, error: err.message };
+    }
+};
+
 const connectDB = async () => {
   try {
-    if (admin.apps.length) {
-      // Test the connection by trying to read the root metadata or users
-      console.log("Testing Firebase connection...");
-      await admin.database().ref(".info/connected").once("value", (snap) => {
-        if (snap.val() === true) {
-          console.log("Firebase Realtime Database холбогдлоо (холболт амжилттай).");
-        } else {
-          console.log("Firebase холболт хүлээгдэж байна...");
-        }
-      });
+    const result = await testDatabaseConnection();
+    if (result.connected) {
+      console.log("Firebase Realtime Database холбогдлоо (холболт амжилттай).");
     } else {
-      console.warn('Firebase App is not initialized.');
+      console.warn("Firebase холболт амжилтгүй эсвэл хүлээгдэж байна:", result.error);
     }
+    return result;
   } catch (err) {
     console.error('Firebase connection test failed:', err.message);
+    return { connected: false, error: err.message };
   }
 };
 
@@ -142,4 +154,4 @@ try {
   };
 }
 
-module.exports = { connectDB, admin, db };
+module.exports = { connectDB, testDatabaseConnection, admin, db };

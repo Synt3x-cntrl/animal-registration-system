@@ -14,43 +14,37 @@ const petsRouter = require("./Routes/pets");
 const medicalRecordsRouter = require("./Routes/medicalRecords");
 const appointmentsRouter = require("./Routes/appointments");
 const doctorSchedulesRouter = require("./Routes/doctorSchedules");
-const { connectDB } = require("./db");
+const { connectDB, testDatabaseConnection } = require("./db");
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Basic health check (no DB dependency)
-app.get("/api/v1/basic-health", (req, res) => {
-  res.status(200).json({ status: "ok", message: "Server is alive" });
-});
+// Initialize DB connection test on startup (non-blocking)
+connectDB().catch(err => console.error("Initial DB connection test failed:", err.message));
 
-try {
-  connectDB();
-} catch (err) {
-  console.error("Failed to run connectDB:", err.stack || err.message);
-}
-
+// API Routes
 app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/pets", petsRouter);
 app.use("/api/v1/medical-records", medicalRecordsRouter);
 app.use("/api/v1/appointments", appointmentsRouter);
 app.use("/api/v1/doctor-schedules", doctorSchedulesRouter);
 
-// Health check route
-app.get("/api/v1/health", (req, res) => {
-  const { admin } = require("./db");
-  res.status(200).json({
-    success: true,
-    message: "Backend server is running correctly",
-    firebaseConnected: admin.apps.length > 0,
-    timestamp: new Date().toISOString(),
+// Health check route - Real DB probe
+app.get("/api/v1/health", async (req, res) => {
+  const dbStatus = await testDatabaseConnection();
+  
+  res.status(dbStatus.connected ? 200 : 503).json({
+    success: dbStatus.connected,
+    message: dbStatus.connected ? "Backend server is healthy" : "Backend server has DB issues",
+    firebase: dbStatus,
     env: process.env.NODE_ENV,
-    vercel: !!process.env.VERCEL
+    vercel: !!process.env.VERCEL,
+    timestamp: new Date().toISOString()
   });
 });
 
-// 404 Handler for API (Express 5 compatible)
+// 404 Handler for API
 app.use("/api/v1", (req, res) => {
   res.status(404).json({
     success: false,
