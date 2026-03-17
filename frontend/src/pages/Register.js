@@ -65,17 +65,15 @@ function Register() {
             &#8592;
           </Link>
           <div className="auth-top-link-text">
-            Already member?
+            Бүртгэлтэй юу?
             <Link to="/login" className="auth-top-link-action">
-              Sign in
+              Нэвтрэх
             </Link>
           </div>
         </div>
 
-        <h1 className="auth-title">Sign Up</h1>
-        <p className="auth-subtitle">
-          Secure Your Communications with Amitani Delguur
-        </p>
+        <h1 className="auth-title">Бүртгүүлэх</h1>
+        <p className="auth-subtitle">Амьтны дэлгүүрт шинээр бүртгүүлэх</p>
 
         <div className="auth-input-group">
           <span className="auth-input-icon">👤</span>
@@ -139,10 +137,10 @@ function Register() {
 
         <div className="auth-submit-row">
           <button className="auth-submit-btn" onClick={handleRegister}>
-            Sign Up <span>→</span>
+            Бүртгүүлэх <span>→</span>
           </button>
 
-          <span className="auth-or-text">Or</span>
+          <span className="auth-or-text">Эсвэл</span>
 
           <div className="auth-social-btns">
             <button className="auth-social-btn">f</button>

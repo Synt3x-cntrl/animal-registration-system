@@ -60,24 +60,22 @@ function Login() {
             &#8592;
           </Link>
           <div className="auth-top-link-text">
-            Don't have an account?
+            Бүртгэлгүй юу?
             <Link to="/register" className="auth-top-link-action">
-              Sign up
+              Бүртгүүлэх
             </Link>
           </div>
         </div>
 
-        <h1 className="auth-title">Sign In</h1>
-        <p className="auth-subtitle">
-          Secure Your Communications with Amitani Delguur
-        </p>
+        <h1 className="auth-title">Нэвтрэх</h1>
+        <p className="auth-subtitle">Амьтны дэлгүүрт тавтай морилно уу</p>
 
         <div className="auth-input-group">
           <span className="auth-input-icon">👤</span>
           <input
             type="email"
             className="auth-input"
-            placeholder="11Danielahmadi@gmail.com"
+            placeholder="Имэйл хаяг"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
@@ -88,7 +86,7 @@ function Login() {
           <input
             type="password"
             className="auth-input"
-            placeholder="••••••••"
+            placeholder="Нууц үг (••••••••)"
             value={upass}
             onChange={(e) => setPass(e.target.value)}
           />
@@ -97,10 +95,10 @@ function Login() {
 
         <div className="auth-submit-row">
           <button className="auth-submit-btn" onClick={handleLogin}>
-            Sign In <span>→</span>
+            Нэвтрэх <span>→</span>
           </button>
 
-          <span className="auth-or-text">Or</span>
+          <span className="auth-or-text">Эсвэл</span>
 
           <div className="auth-social-btns">
             <button className="auth-social-btn">f</button>
