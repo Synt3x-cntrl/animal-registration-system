@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation, Navigate } from "react-router-dom";
 import "./styles/style.css";
 
 import Home from "./pages/Home";
@@ -17,8 +17,12 @@ import Sidebar from "./components/Sidebar";
 
 function Layout({ children }) {
   const location = useLocation();
-  const isAuthPage =
-    location.pathname === "/login" || location.pathname === "/register";
+  const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
+  const user = localStorage.getItem("user");
+
+  if (!isAuthPage && !user) {
+    return <Navigate to="/login" replace />;
+  }
 
   if (isAuthPage) {
     return <div className="auth-layout">{children}</div>;
