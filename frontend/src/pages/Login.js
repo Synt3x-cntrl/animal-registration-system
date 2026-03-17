@@ -1,8 +1,6 @@
-import "../styles/style.css";
+import "../styles/auth.css";
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import MyInput from "../components/MyInput";
-import MyButton from "../components/My_button";
 import API_URL from "../apiConfig";
 
 function Login() {
@@ -19,9 +17,9 @@ function Login() {
       const response = await fetch(`${API_URL}/auth/login`, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify({ email, password: upass })
+        body: JSON.stringify({ email, password: upass }),
       });
 
       if (!response.ok) {
@@ -41,7 +39,7 @@ function Login() {
         alert("Амжилттай нэвтэрлээ");
         localStorage.setItem("user", JSON.stringify(data.user));
 
-        if (data.user.role === 'admin') {
+        if (data.user.role === "admin") {
           window.location.href = "/admin";
         } else {
           window.location.href = "/";
@@ -55,27 +53,59 @@ function Login() {
   };
 
   return (
-    <div className="container">
-      <p className="title">Энэ миний анхны вэб сайт</p>
-      <div>
-        <MyInput
-          type="email"
-          placeholder="Эмэйл хаяг"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)} />
+    <div className="auth-page-wrapper">
+      <div className="auth-form-container">
+        <div className="auth-header-top">
+          <Link to="/" className="auth-back-btn">
+            &#8592;
+          </Link>
+          <div className="auth-top-link-text">
+            Don't have an account?
+            <Link to="/register" className="auth-top-link-action">
+              Sign up
+            </Link>
+          </div>
+        </div>
 
-        <MyInput
-          type="password"
-          placeholder="Нууц үг"
-          value={upass}
-          onChange={(e) => setPass(e.target.value)} />
+        <h1 className="auth-title">Sign In</h1>
+        <p className="auth-subtitle">
+          Secure Your Communications with Amitani Delguur
+        </p>
 
-        <MyButton
-          title="Нэвтрэх"
-          onClick={handleLogin} value="mybutton" />
+        <div className="auth-input-group">
+          <span className="auth-input-icon">👤</span>
+          <input
+            type="email"
+            className="auth-input"
+            placeholder="11Danielahmadi@gmail.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+        </div>
 
-        <div style={{ marginTop: '20px', textAlign: 'center' }}>
-          <p>Бүртгэлгүй юу? <Link to="/register" style={{ color: '#007bff', textDecoration: 'none' }}>Бүртгүүлэх</Link></p>
+        <div className="auth-input-group">
+          <span className="auth-input-icon">💬</span>
+          <input
+            type="password"
+            className="auth-input"
+            placeholder="••••••••"
+            value={upass}
+            onChange={(e) => setPass(e.target.value)}
+          />
+          <span className="auth-input-right-icon eye">👁️</span>
+        </div>
+
+        <div className="auth-submit-row">
+          <button className="auth-submit-btn" onClick={handleLogin}>
+            Sign In <span>→</span>
+          </button>
+
+          <span className="auth-or-text">Or</span>
+
+          <div className="auth-social-btns">
+            <button className="auth-social-btn">f</button>
+            <button className="auth-social-btn">G</button>
+          </div>
         </div>
       </div>
     </div>

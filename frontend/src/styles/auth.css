@@ -1,0 +1,194 @@
+/* AUTH CSS based on the requested mockup */
+
+.auth-page-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-color: #ffffff; /* pure white background */
+  font-family:
+    "Inter",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    Helvetica,
+    Arial,
+    sans-serif;
+}
+
+.auth-form-container {
+  width: 100%;
+  max-width: 450px;
+  padding: 40px;
+  background: #ffffff;
+}
+
+.auth-header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 50px;
+}
+
+.auth-back-btn {
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #333;
+  font-size: 18px;
+  transition: background-color 0.2s;
+  text-decoration: none;
+}
+
+.auth-back-btn:hover {
+  background: #f0f0f0;
+}
+
+.auth-top-link-text {
+  font-size: 14px;
+  color: #666;
+}
+
+.auth-top-link-action {
+  color: #3b5bdb; /* Primary blue */
+  font-weight: 600;
+  text-decoration: none;
+  margin-left: 5px;
+}
+
+.auth-title {
+  font-size: 42px;
+  font-weight: 700;
+  color: #111;
+  margin: 0;
+  margin-bottom: 10px;
+}
+
+.auth-subtitle {
+  font-size: 14px;
+  color: #999;
+  margin-bottom: 40px;
+}
+
+.auth-input-group {
+  position: relative;
+  margin-bottom: 25px;
+}
+
+.auth-input-icon {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #a0a0a0;
+  font-size: 18px;
+}
+
+.auth-input {
+  width: 100%;
+  padding: 15px 15px 15px 35px; /* space for icon */
+  border: none;
+  border-bottom: 1px solid #e0e0e0;
+  font-size: 15px;
+  color: #333;
+  box-sizing: border-box;
+  background: transparent;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.auth-input::placeholder {
+  color: #bcbcbc;
+}
+
+.auth-input:focus {
+  border-bottom: 2px solid #3b5bdb;
+}
+
+/* Specific right-side icons like checkmarks or eye */
+.auth-input-right-icon {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #10b981; /* Green check */
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.auth-input-right-icon.eye {
+  color: #666;
+}
+
+.auth-submit-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 40px;
+}
+
+.auth-submit-btn {
+  background-color: #5c6fff; /* vibrant blue */
+  color: white;
+  border: none;
+  border-radius: 25px;
+  padding: 12px 30px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition:
+    background-color 0.2s,
+    transform 0.1s;
+  box-shadow: 0 4px 15px rgba(92, 111, 255, 0.3);
+}
+
+.auth-submit-btn:hover {
+  background-color: #4a5cff;
+}
+
+.auth-submit-btn:active {
+  transform: scale(0.98);
+}
+
+.auth-or-text {
+  font-size: 14px;
+  color: #aaa;
+}
+
+.auth-social-btns {
+  display: flex;
+  gap: 15px;
+}
+
+.auth-social-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid #e0e0e0;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.auth-social-btn:hover {
+  background: #f8f8f8;
+}
+
+.auth-social-btn img {
+  width: 20px;
+  height: 20px;
+}
