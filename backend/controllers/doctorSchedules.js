@@ -1,8 +1,5 @@
-const { admin, db } = require("../db");
+const DoctorSchedule = require("../models/DoctorSchedule");
 
-// @desc    Эмч өөрийн боломжтой цагийг нэмэх
-// @route   POST /api/v1/doctor-schedules
-// @access  Public
 exports.createSchedule = async (req, res, next) => {
     try {
         const { doctorId, date } = req.body;
@@ -14,19 +11,7 @@ exports.createSchedule = async (req, res, next) => {
             });
         }
 
-        const schedulesRef = db.ref("doctor_schedules");
-
-        // Check if exact slot already exists (Realtime DB can only query one child, so query doctorId and filter date)
-        const snapshot = await schedulesRef.orderByChild("doctorId").equalTo(doctorId).once("value");
-        let exists = false;
-
-        if (snapshot.exists()) {
-            snapshot.forEach(child => {
-                if (child.val().date === date) {
-                    exists = true;
-                }
-            });
-        }
+        const exists = await DoctorSchedule.findOne({ doctorId, date });
 
         if (exists) {
             return res.status(400).json({
@@ -35,18 +20,14 @@ exports.createSchedule = async (req, res, next) => {
             });
         }
 
-        const newSchedule = {
+        const newSchedule = await DoctorSchedule.create({
             doctorId,
-            date,
-            isBooked: false,
-            createdAt: admin.database.ServerValue.TIMESTAMP
-        };
-
-        const newScheduleRef = await schedulesRef.push(newSchedule);
+            date
+        });
 
         res.status(201).json({
             success: true,
-            data: { _id: newScheduleRef.key, ...newSchedule },
+            data: newSchedule,
         });
     } catch (error) {
         res.status(400).json({
@@ -56,30 +37,14 @@ exports.createSchedule = async (req, res, next) => {
     }
 };
 
-// @desc    Тодорхой эмчийн цагийн хуваарийг авах
-// @route   GET /api/v1/doctor-schedules/:doctorId
-// @access  Public
 exports.getDoctorSchedules = async (req, res, next) => {
     try {
-        const snapshot = await db.ref("doctor_schedules")
-            .orderByChild("doctorId")
-            .equalTo(req.params.doctorId)
-            .once("value");
-
-        let schedules = [];
-
-        if (snapshot.exists()) {
-            snapshot.forEach(doc => {
-                schedules.push({ _id: doc.key, ...doc.val() });
-            });
-
-            if (req.query.isBooked !== undefined) {
-                const isBooked = req.query.isBooked === 'true';
-                schedules = schedules.filter(s => s.isBooked === isBooked);
-            }
-
-            schedules.sort((a, b) => new Date(a.date || 0) - new Date(b.date || 0));
+        let query = { doctorId: req.params.doctorId };
+        if (req.query.isBooked !== undefined) {
+            query.isBooked = req.query.isBooked === 'true';
         }
+
+        const schedules = await DoctorSchedule.find(query).sort({ date: 1 }).lean();
 
         res.status(200).json({
             success: true,
@@ -94,31 +59,25 @@ exports.getDoctorSchedules = async (req, res, next) => {
     }
 };
 
-// @desc    Эмчийн цуцлах (устгах) хуваарь
-// @route   DELETE /api/v1/doctor-schedules/:id
-// @access  Public
 exports.deleteSchedule = async (req, res, next) => {
     try {
-        const scheduleRef = db.ref("doctor_schedules").child(req.params.id);
-        const doc = await scheduleRef.once("value");
+        const doc = await DoctorSchedule.findById(req.params.id);
 
-        if (!doc.exists()) {
+        if (!doc) {
             return res.status(404).json({
                 success: false,
                 error: `Хуваарь олдсонгүй id: ${req.params.id}`,
             });
         }
 
-        const scheduleData = doc.val();
-
-        if (scheduleData.isBooked) {
+        if (doc.isBooked) {
             return res.status(400).json({
                 success: false,
                 error: "Захиалга хийгдсэн цагийг устгах боломжгүй",
             });
         }
 
-        await scheduleRef.remove();
+        await DoctorSchedule.findByIdAndDelete(req.params.id);
 
         res.status(200).json({
             success: true,

@@ -11,53 +11,46 @@ function Login() {
 
   const handleLogin = async () => {
     try {
-      // 1. Log into Firebase directly (just like the Flutter app)
-      const { signInWithEmailAndPassword } = await import("firebase/auth");
-      const { auth } = await import("../firebase");
-
-      await signInWithEmailAndPassword(auth, email, upass);
-
-      // 2. Fetch the extra user data (like role, firstname, etc.) from our backend
-      // Since we don't have a GET /user/:email, we can fetch all users or we can just send a fast request 
-      // Actually, we can just use the backend login to get the data, BUT it will fail if they don't have a bcrypt password.
-      // Easiest hack without changing much backend: Fetch all users and find the one with this email (if small DB),
-      // OR better, since their UID is their Firestore ID, we can fetch the user directly if we had a dedicated route.
-      // For now, let's fetch all users, it's a small app.
-      const usersResponse = await fetch(`${API_URL}/auth/users`);
-      
-      if (!usersResponse.ok) {
-        const errorText = await usersResponse.text();
-        throw new Error(`Сервер дээр алдаа гарлаа: ${usersResponse.status} ${errorText.substring(0, 100)}`);
+      if (!email || !upass) {
+        alert("Имэйл болон нууц үгээ оруулна уу");
+        return;
       }
 
-      const usersData = await usersResponse.json();
+      const response = await fetch(`${API_URL}/auth/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ email, password: upass })
+      });
 
-      if (usersData.data) {
-        const customUser = usersData.data.find(u => u.email === email);
+      if (!response.ok) {
+        const errorText = await response.text();
+        let errorData;
+        try {
+          errorData = JSON.parse(errorText);
+        } catch (e) {
+          throw new Error(`Сервер дээр алдаа гарлаа: ${response.status}`);
+        }
+        throw new Error(errorData.error || "Нэвтрэхэд алдаа гарлаа");
+      }
 
-        if (customUser) {
-          alert("Амжилттай нэвтэрлээ");
-          // Save user to localStorage exact same way as before
-          localStorage.setItem("user", JSON.stringify(customUser));
+      const data = await response.json();
 
-          if (customUser.role === 'admin') {
-            window.location.href = "/admin";
-          } else {
-            window.location.href = "/";
-          }
+      if (data.success && data.user) {
+        alert("Амжилттай нэвтэрлээ");
+        localStorage.setItem("user", JSON.stringify(data.user));
+
+        if (data.user.role === 'admin') {
+          window.location.href = "/admin";
         } else {
-          alert("Хэрэглэгчийн мэдээлэл олдсонгүй");
+          window.location.href = "/";
         }
       } else {
-        alert("Хэрэглэгчдийн мөнбэй мэдээлэл татахад алдаа гарлаа");
+        alert("Хэрэглэгчийн мэдээлэл олдсонгүй");
       }
-
     } catch (error) {
-      let errorMsg = error.message;
-      if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password') {
-        errorMsg = "Имэйл эсвэл нууц үг буруу байна";
-      }
-      alert("Алдаа гарлаа: " + errorMsg);
+      alert("Алдаа гарлаа: " + error.message);
     }
   };
 
