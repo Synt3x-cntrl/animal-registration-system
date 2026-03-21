@@ -2,6 +2,8 @@ import { BrowserRouter, Routes, Route, useLocation, Navigate } from "react-route
 import "./styles/style.css";
 
 import Home from "./pages/Home";
+import About from "./pages/About";
+import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import MyPets from "./pages/MyPets";
@@ -18,9 +20,15 @@ import Sidebar from "./components/Sidebar";
 function Layout({ children }) {
   const location = useLocation();
   const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
+  const isPublicPage = location.pathname === '/' || location.pathname === '/about';
   const user = localStorage.getItem("user");
 
-  if (!isAuthPage && !user) {
+  // Logged-in users should not see public pages
+  if (isPublicPage && user) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  if (!isAuthPage && !isPublicPage && !user) {
     return <Navigate to="/login" replace />;
   }
 
@@ -28,13 +36,22 @@ function Layout({ children }) {
     return <div className="auth-layout">{children}</div>;
   }
 
+  if (isPublicPage) {
+    return (
+      <div className="public-layout" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+        <Navbar />
+        {children}
+      </div>
+    );
+  }
+
   return (
     <>
       <Navbar />
-      <div style={{ display: "flex" }}>
+      <div className="responsive-flex" style={{ display: "flex", flex: 1 }}>
         <Sidebar />
         <div
-          className="content"
+          className="content responsive-content"
           style={{
             padding: "20px",
             flex: 1,
@@ -56,7 +73,8 @@ function App() {
       <Layout>
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/dashboard" element={<Home />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/my-pets" element={<MyPets />} />
           <Route path="/appointments" element={<Appointments />} />
           <Route path="/medical-history" element={<MedicalHistory />} />

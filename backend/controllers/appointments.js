@@ -4,42 +4,65 @@ const User = require("../models/User");
 
 exports.createAppointment = async (req, res, next) => {
     try {
-        const { petName, reason, ownerId, doctorId, scheduleId } = req.body;
+        const { petName, reason, ownerId, doctorId, scheduleId, date } = req.body;
 
-        if (!ownerId || !doctorId || !scheduleId) {
+        if (!ownerId || !doctorId) {
             return res.status(400).json({
                 success: false,
-                error: "Эзэмшигчийн ID, Эмчийн ID, Цагийн хуваарь (scheduleId) заавал шаардлагатай",
+                error: "Эзэмшигчийн ID, Эмчийн ID заавал шаардлагатай",
             });
         }
 
-        const scheduleDoc = await DoctorSchedule.findById(scheduleId);
+        let apptDate;
+        if (scheduleId) {
+            const scheduleDoc = await DoctorSchedule.findById(scheduleId);
 
-        if (!scheduleDoc) {
-            return res.status(404).json({
-                success: false,
-                error: "Цагийн хуваарь олдсонгүй",
-            });
-        }
+            if (!scheduleDoc) {
+                return res.status(404).json({
+                    success: false,
+                    error: "Цагийн хуваарь олдсонгүй",
+                });
+            }
 
-        if (scheduleDoc.isBooked) {
+            if (scheduleDoc.isBooked) {
+                return res.status(400).json({
+                    success: false,
+                    error: "Энэ цаг хэдийнээ захиалагдсан байна. Өөр цаг сонгоно уу.",
+                });
+            }
+            apptDate = scheduleDoc.date;
+            scheduleDoc.isBooked = true;
+            await scheduleDoc.save();
+        } else if (date) {
+            apptDate = date;
+        } else {
             return res.status(400).json({
                 success: false,
-                error: "Энэ цаг хэдийнээ захиалагдсан байна. Өөр цаг сонгоно уу.",
+                error: "Огноо эсвэл Цагийн хуваарь (scheduleId) заавал шаардлагатай",
             });
         }
 
         const newAppointment = await Appointment.create({
             petName,
-            date: scheduleDoc.date,
+            date: apptDate,
             reason,
             ownerId,
             doctorId,
             scheduleId
         });
 
-        scheduleDoc.isBooked = true;
-        await scheduleDoc.save();
+        // Create Notification for the user
+        try {
+            const Notification = require("../models/Notification");
+            await Notification.create({
+                user: ownerId,
+                title: '📅 Цаг захиалга баталгаажлаа',
+                message: `${petName} амьтны ${new Date(apptDate).toLocaleDateString()} ${new Date(apptDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} үзлэгийн цаг амжилттай захиалагдлаа.`,
+                type: 'success'
+            });
+        } catch (nErr) {
+            console.error("Failed to create notification:", nErr);
+        }
 
         res.status(201).json({
             success: true,

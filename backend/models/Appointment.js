@@ -6,7 +6,7 @@ const AppointmentSchema = new mongoose.Schema({
     reason: { type: String },
     ownerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     doctorId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-    scheduleId: { type: mongoose.Schema.Types.ObjectId, ref: 'DoctorSchedule', required: true },
+    scheduleId: { type: mongoose.Schema.Types.ObjectId, ref: 'DoctorSchedule' },
     createdAt: { type: Date, default: Date.now }
 });
 

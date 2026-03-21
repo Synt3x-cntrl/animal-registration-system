@@ -1,8 +1,9 @@
 const Pet = require("../models/Pet");
+const User = require("../models/User");
 
 exports.createPet = async (req, res, next) => {
     try {
-        const { name, species, age, gender, imageUrl, owner } = req.body;
+        const { name, species, birthdate, age, gender, breed, color, weight, imageUrl, owner } = req.body;
 
         if (!owner) {
             return res.status(400).json({
@@ -14,8 +15,12 @@ exports.createPet = async (req, res, next) => {
         const newPet = await Pet.create({
             name,
             species,
+            birthdate,
             age,
             gender,
+            breed,
+            color,
+            weight,
             imageUrl,
             owner
         });
@@ -28,6 +33,32 @@ exports.createPet = async (req, res, next) => {
         res.status(400).json({
             success: false,
             error: error.message,
+        });
+    }
+};
+
+exports.updatePet = async (req, res, next) => {
+    try {
+        const pet = await Pet.findByIdAndUpdate(req.params.id, req.body, {
+            new: true,
+            runValidators: true
+        });
+
+        if (!pet) {
+            return res.status(404).json({
+                success: false,
+                error: "Амьтан олдсонгүй"
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            data: pet
+        });
+    } catch (error) {
+        res.status(400).json({
+            success: false,
+            error: error.message
         });
     }
 };
@@ -51,7 +82,7 @@ exports.getUserPets = async (req, res, next) => {
 
 exports.getAllPets = async (req, res, next) => {
     try {
-        const pets = await Pet.find().sort({ createdAt: -1 });
+        const pets = await Pet.find().populate('owner', 'firstname lastname email phone').sort({ createdAt: -1 });
 
         res.status(200).json({
             success: true,
@@ -76,6 +107,36 @@ exports.deletePet = async (req, res, next) => {
             success: true,
             data: {},
             message: "Амьтны мэдээлэл амжилттай устгагдлаа"
+        });
+    } catch (error) {
+        res.status(400).json({
+            success: false,
+            error: error.message,
+        });
+    }
+};
+
+exports.searchPets = async (req, res, next) => {
+    try {
+        const q = req.query.q;
+        if (!q) {
+            return res.status(200).json({ success: true, count: 0, data: [] });
+        }
+
+        const users = await User.find({ phone: { $regex: q, $options: 'i' } });
+        const userIds = users.map(u => u._id);
+
+        const pets = await Pet.find({
+            $or: [
+                { name: { $regex: q, $options: 'i' } },
+                { owner: { $in: userIds } }
+            ]
+        }).populate('owner', 'firstname lastname phone email');
+
+        res.status(200).json({
+            success: true,
+            count: pets.length,
+            data: pets,
         });
     } catch (error) {
         res.status(400).json({

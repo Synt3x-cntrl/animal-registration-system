@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import API_URL from '../apiConfig';
+import LoadingSpinner from './LoadingSpinner';
 
 const MedicalRecordsList = ({ userId }) => {
     const [records, setRecords] = useState([]);
@@ -25,7 +26,7 @@ const MedicalRecordsList = ({ userId }) => {
         }
     }, [userId]);
 
-    if (loading) return <div>Ачааллаж байна...</div>;
+    if (loading) return <LoadingSpinner text="Ачааллаж байна..." />;
 
     if (records.length === 0) {
         return (
@@ -45,7 +46,7 @@ const MedicalRecordsList = ({ userId }) => {
                     borderRadius: '8px',
                     boxShadow: '0 2px 5px rgba(0,0,0,0.05)'
                 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', justifyContent: 'space-between', marginBottom: '10px' }}>
                         <h4 style={{ margin: 0, color: '#2c3e50' }}>Амьтан: {record.petName}</h4>
                         <span style={{ color: '#7f8c8d', fontSize: '14px' }}>
                             {new Date(record.date).toLocaleDateString()}

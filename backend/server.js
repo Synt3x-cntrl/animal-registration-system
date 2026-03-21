@@ -13,12 +13,15 @@ const authRouter = require("./Routes/auth");
 const petsRouter = require("./Routes/pets");
 const medicalRecordsRouter = require("./Routes/medicalRecords");
 const appointmentsRouter = require("./Routes/appointments");
+const notificationsRouter = require("./Routes/notifications");
 const doctorSchedulesRouter = require("./Routes/doctorSchedules");
+const dailySummariesRouter = require("./Routes/dailySummaries");
 const { connectDB, testDatabaseConnection } = require("./db");
 
 const app = express();
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ limit: "10mb", extended: true }));
 
 // Initialize DB connection test on startup (non-blocking)
 connectDB().catch(err => console.error("Initial DB connection test failed:", err.message));
@@ -28,7 +31,10 @@ app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/pets", petsRouter);
 app.use("/api/v1/medical-records", medicalRecordsRouter);
 app.use("/api/v1/appointments", appointmentsRouter);
+app.use("/api/v1/notifications", notificationsRouter);
 app.use("/api/v1/doctor-schedules", doctorSchedulesRouter);
+app.use("/api/v1/daily-summaries", dailySummariesRouter);
+app.use("/api/v1/stats", require("./Routes/stats"));
 
 // Health check route - Real DB probe
 app.get("/api/v1/health", async (req, res) => {

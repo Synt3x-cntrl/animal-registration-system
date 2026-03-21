@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
 import AppointmentForm from "../components/AppointmentForm";
 import DoctorScheduleManager from "../components/DoctorScheduleManager";
+import UserAppointmentsList from "../components/UserAppointmentsList";
 
 function Appointments() {
     const [user, setUser] = useState(null);
+    const [refreshKey, setRefreshKey] = useState(0);
 
     useEffect(() => {
         const storedUser = localStorage.getItem("user");
@@ -32,13 +34,19 @@ function Appointments() {
         );
     }
 
-    // Хэрэглэгч — цаг захиалах маягт
+    // Хэрэглэгч — цаг захиалах маягт + захиалгуудын жагсаалт
     return (
         <div style={{ padding: "20px", maxWidth: "800px", margin: "0 auto" }}>
             <h2 style={{ color: "#2c3e50", borderBottom: "2px solid var(--primary-color)", paddingBottom: "10px", marginBottom: "30px" }}>📅 Цаг захиалах</h2>
             <div style={{ backgroundColor: "white", padding: "30px", borderRadius: "10px", boxShadow: "0 2px 10px rgba(0,0,0,0.05)" }}>
-                <AppointmentForm ownerId={user._id} />
+                <AppointmentForm
+                    ownerId={user._id}
+                    onAppointmentAdded={() => setRefreshKey(k => k + 1)}
+                />
             </div>
+
+            {/* Хэрэглэгчийн захиалгуудын жагсаалт + цуцлах */}
+            <UserAppointmentsList userId={user._id} refreshKey={refreshKey} />
         </div>
     );
 }

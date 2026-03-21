@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 
 const Settings = () => {
-    const [theme, setTheme] = useState(localStorage.getItem('appTheme') || '#007bff');
+    const [theme, setTheme] = useState(localStorage.getItem('appTheme') || '#a2a2df');
 
     useEffect(() => {
         // Хэрэглэгч өнгө сонгох үед бүх вэбийн үндсэн өнгийг солино
@@ -10,7 +10,7 @@ const Settings = () => {
     }, [theme]);
 
     const themes = [
-        { name: 'Цэнхэр (Үндсэн)', color: '#007bff' },
+        { name: 'Ягаан (Үндсэн)', color: '#a2a2df' },
         { name: 'Ногоон', color: '#27ae60' },
         { name: 'Улаан', color: '#e74c3c' },
         { name: 'Нил ягаан', color: '#9b59b6' },

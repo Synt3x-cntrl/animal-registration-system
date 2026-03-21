@@ -6,11 +6,13 @@ import API_URL from "../apiConfig";
 function Login() {
   const [email, setEmail] = useState("");
   const [upass, setPass] = useState("");
+  const [errorMsg, setErrorMsg] = useState("");
 
   const handleLogin = async () => {
+    setErrorMsg("");
     try {
       if (!email || !upass) {
-        alert("Имэйл болон нууц үгээ оруулна уу");
+        setErrorMsg("Имэйл болон нууц үгээ оруулна уу 🐾");
         return;
       }
 
@@ -36,39 +38,41 @@ function Login() {
       const data = await response.json();
 
       if (data.success && data.user) {
-        alert("Амжилттай нэвтэрлээ");
         localStorage.setItem("user", JSON.stringify(data.user));
-
-        if (data.user.role === "admin") {
-          window.location.href = "/admin";
-        } else {
-          window.location.href = "/";
-        }
+        window.location.href = "/dashboard";
       } else {
-        alert("Хэрэглэгчийн мэдээлэл олдсонгүй");
+        setErrorMsg("Хэрэглэгчийн мэдээлэл олдсонгүй 🐾");
       }
     } catch (error) {
-      alert("Алдаа гарлаа: " + error.message);
+      setErrorMsg(error.message + " 🐾");
     }
   };
 
   return (
     <div className="auth-page-wrapper">
-      <div className="auth-form-container">
-        <div className="auth-header-top">
-          <Link to="/" className="auth-back-btn">
-            &#8592;
-          </Link>
-          <div className="auth-top-link-text">
-            Бүртгэлгүй юу?
-            <Link to="/register" className="auth-top-link-action">
-              Бүртгүүлэх
+      <div className="auth-image-side"></div>
+      <div className="auth-form-side">
+        <div className="auth-form-container">
+          <div className="auth-header-top">
+            <Link to="/" className="auth-back-btn">
+              &#8592;
             </Link>
+            <div className="auth-top-link-text">
+              Бүртгэлгүй юу?
+              <Link to="/register" className="auth-top-link-action">
+                Бүртгүүлэх
+              </Link>
+            </div>
           </div>
-        </div>
 
-        <h1 className="auth-title">Нэвтрэх</h1>
-        <p className="auth-subtitle">Амьтны дэлгүүрт тавтай морилно уу</p>
+          <h1 className="auth-title">Нэвтрэх</h1>
+          <p className="auth-subtitle">Системд тавтай морил. Та өөрийн бүртгэлээр нэвтэрч амьтдынхаа мэдээллийг удирдана уу.</p>
+
+          {errorMsg && (
+            <div className="auth-error-msg">
+              <span>⚠️</span> {errorMsg}
+            </div>
+          )}
 
         <div className="auth-input-group">
           <span className="auth-input-icon">👤</span>
@@ -107,6 +111,7 @@ function Login() {
         </div>
       </div>
     </div>
+  </div>
   );
 }
 

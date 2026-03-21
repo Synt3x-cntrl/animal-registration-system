@@ -35,6 +35,19 @@ exports.createRecord = async (req, res, next) => {
             ownerId: finalOwnerId
         });
 
+        // Create Notification for the owner
+        try {
+            const Notification = require("../models/Notification");
+            await Notification.create({
+                user: finalOwnerId,
+                title: '🩺 Шинэ эмнэлгийн тэмдэглэл',
+                message: `${petName} амьтны үзлэгийн тэмдэглэлийг эмч ${doctorName} орууллаа.`,
+                type: 'info'
+            });
+        } catch (nErr) {
+            console.error("Failed to create notification:", nErr);
+        }
+
         res.status(201).json({
             success: true,
             data: newRecord,

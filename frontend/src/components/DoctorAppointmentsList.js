@@ -1,9 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import API_URL from '../apiConfig';
+import LoadingSpinner from './LoadingSpinner';
 
 const DoctorAppointmentsList = ({ doctorId, onAppointmentClick }) => {
     const [appointments, setAppointments] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [searchDate, setSearchDate] = useState(() => {
+        const d = new Date();
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    });
 
     const fetchAppointments = useCallback(async () => {
         setLoading(true);
@@ -11,7 +16,8 @@ const DoctorAppointmentsList = ({ doctorId, onAppointmentClick }) => {
             const response = await fetch(`${API_URL}/appointments/doctor/${doctorId}`);
             const data = await response.json();
             if (response.ok) {
-                setAppointments(data.data);
+                const sorted = data.data.sort((a, b) => new Date(a.date) - new Date(b.date));
+                setAppointments(sorted);
             }
         } catch (error) {
             console.error("Захиалгууд татахад алдаа гарлаа:", error);
@@ -38,16 +44,49 @@ const DoctorAppointmentsList = ({ doctorId, onAppointmentClick }) => {
                 🩺 Миний захиалгууд ({appointments.length})
             </h3>
 
+            <div style={{ position: 'relative', marginBottom: '15px' }}>
+                <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', color: '#555', fontWeight: 'bold' }}>Огноогоор хайх:</label>
+                <input
+                    type="date"
+                    value={searchDate}
+                    onChange={(e) => setSearchDate(e.target.value)}
+                    style={{
+                        width: '100%',
+                        padding: '10px',
+                        borderRadius: '8px',
+                        border: '1px solid #ced4da',
+                        boxSizing: 'border-box',
+                        fontSize: '14px',
+                        outline: 'none',
+                    }}
+                    onFocus={e => e.target.style.borderColor = '#3498db'}
+                    onBlur={e => e.target.style.borderColor = '#ced4da'}
+                />
+            </div>
+
             {loading ? (
-                <div style={{ textAlign: 'center', padding: '20px' }}>Ачааллаж байна...</div>
+                <LoadingSpinner text="Захиалгуудыг ачааллаж байна..." />
             ) : appointments.length === 0 ? (
                 <div style={{ textAlign: 'center', padding: '30px', color: '#7f8c8d', border: '1px dashed #ced4da', borderRadius: '5px' }}>
                     Одоогоор захиалга байхгүй байна.
                 </div>
             ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                    {appointments.map(app => {
-                        const d = new Date(app.date);
+                    {(() => {
+                        const filteredAppointments = searchDate 
+                            ? appointments.filter(app => {
+                                const d = new Date(app.date);
+                                const localDateStr = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                                return localDateStr === searchDate;
+                            })
+                            : appointments;
+
+                        if (filteredAppointments.length === 0) {
+                            return <div style={{ textAlign: 'center', padding: '20px', color: '#7f8c8d' }}>Энэ өдөр захиалга олдсонгүй.</div>;
+                        }
+
+                        return filteredAppointments.map(app => {
+                            const d = new Date(app.date);
                         return (
                             <div key={app._id}
                                 onClick={() => onAppointmentClick && onAppointmentClick(app)}
@@ -89,8 +128,7 @@ const DoctorAppointmentsList = ({ doctorId, onAppointmentClick }) => {
                                 </div>
                             </div>
                         );
-                    })}
-
+                    })})()}
                 </div>
             )}
         </div>

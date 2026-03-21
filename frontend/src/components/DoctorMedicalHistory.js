@@ -1,11 +1,18 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import API_URL from '../apiConfig';
+import LoadingSpinner from './LoadingSpinner';
 
 const DoctorMedicalHistory = ({ doctorName }) => {
     const [records, setRecords] = useState([]);
     const [filtered, setFiltered] = useState([]);
     const [loading, setLoading] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
+
+    const [schedulingRecord, setSchedulingRecord] = useState(null);
+    const [nextApptDate, setNextApptDate] = useState('');
+    const [isScheduling, setIsScheduling] = useState(false);
+
+    const doctorUser = JSON.parse(localStorage.getItem('user'));
 
     const fetchRecords = useCallback(async () => {
         setLoading(true);
@@ -40,6 +47,48 @@ const DoctorMedicalHistory = ({ doctorName }) => {
                 (r.ownerEmail || '').toLowerCase().includes(q) ||
                 (r.ownerPhone || '').toLowerCase().includes(q)
             ));
+        }
+    };
+
+    const handleScheduleNextAppt = async (e) => {
+        e.preventDefault();
+        if (!nextApptDate || !schedulingRecord) return;
+        setIsScheduling(true);
+
+        try {
+            // 1. Create a schedule slot
+            const schedRes = await fetch(`${API_URL}/doctor-schedules`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ doctorId: doctorUser._id, date: nextApptDate }) // Save exactly as string
+            });
+            const schedData = await schedRes.json();
+            
+            if (!schedRes.ok) throw new Error(schedData.error || "Цаг үүсгэхэд алдаа гарлаа");
+
+            // 2. Book the appointment
+            const apptRes = await fetch(`${API_URL}/appointments`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    petName: schedulingRecord.petName,
+                    reason: "Давтан үзлэг",
+                    ownerId: schedulingRecord.ownerId,
+                    doctorId: doctorUser._id,
+                    scheduleId: schedData.data._id
+                })
+            });
+            const apptData = await apptRes.json();
+
+            if (!apptRes.ok) throw new Error(apptData.error || "Захиалга үүсгэхэд алдаа гарлаа");
+
+            alert("Дараагийн үзлэг амжилттай товлогдлоо!");
+            setSchedulingRecord(null);
+            setNextApptDate('');
+        } catch (error) {
+            alert(error.message);
+        } finally {
+            setIsScheduling(false);
         }
     };
 
@@ -127,8 +176,79 @@ const DoctorMedicalHistory = ({ doctorName }) => {
                             <div style={{ fontSize: '13px', color: '#555' }}>
                                 <strong>Эмчилгээ:</strong> <span style={{ color: '#27ae60' }}>{record.treatment}</span>
                             </div>
+                            
+                            <div style={{ marginTop: '15px' }}>
+                                <button
+                                    onClick={() => setSchedulingRecord(record)}
+                                    style={{
+                                        padding: '8px 15px',
+                                        backgroundColor: '#2980b9',
+                                        color: 'white',
+                                        border: 'none',
+                                        borderRadius: '5px',
+                                        cursor: 'pointer',
+                                        fontSize: '13px',
+                                        transition: 'background-color 0.2s'
+                                    }}
+                                    onMouseEnter={(e) => e.target.style.backgroundColor = '#1f6391'}
+                                    onMouseLeave={(e) => e.target.style.backgroundColor = '#2980b9'}
+                                >
+                                    📅 Дараагийн үзлэг товлох
+                                </button>
+                            </div>
                         </div>
                     ))}
+                </div>
+            )}
+
+            {schedulingRecord && (
+                <div style={{
+                    position: 'fixed',
+                    top: 0, left: 0, right: 0, bottom: 0,
+                    backgroundColor: 'rgba(0,0,0,0.5)',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    zIndex: 1000
+                }}>
+                    <div style={{ backgroundColor: 'white', padding: '25px', borderRadius: '10px', width: '90%', maxWidth: '400px', boxShadow: '0 5px 15px rgba(0,0,0,0.3)' }}>
+                        <h3 style={{ marginTop: 0, marginBottom: '20px', color: '#2c3e50', borderBottom: '1px solid #eee', paddingBottom: '10px' }}>
+                            🗓 Дараагийн үзлэг товлох
+                        </h3>
+                        <p style={{ marginBottom: '15px', fontSize: '14px', color: '#555' }}>
+                            <strong>Амьтан:</strong> {schedulingRecord.petName}
+                        </p>
+                        
+                        <form onSubmit={handleScheduleNextAppt} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                            <div>
+                                <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', color: '#333' }}>Огноо болон цаг:</label>
+                                <input 
+                                    type="datetime-local" 
+                                    value={nextApptDate}
+                                    onChange={(e) => setNextApptDate(e.target.value)}
+                                    required
+                                    style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ccc', boxSizing: 'border-box' }}
+                                />
+                            </div>
+                            
+                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px' }}>
+                                <button 
+                                    type="button" 
+                                    onClick={() => setSchedulingRecord(null)}
+                                    style={{ padding: '8px 15px', backgroundColor: '#e0e0e0', color: '#333', border: 'none', borderRadius: '5px', cursor: 'pointer' }}
+                                >
+                                    Цуцлах
+                                </button>
+                                <button 
+                                    type="submit" 
+                                    disabled={isScheduling}
+                                    style={{ padding: '8px 15px', backgroundColor: '#27ae60', color: 'white', border: 'none', borderRadius: '5px', cursor: isScheduling ? 'not-allowed' : 'pointer', opacity: isScheduling ? 0.7 : 1 }}
+                                >
+                                    {isScheduling ? 'Уншиж байна...' : 'Товлох'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             )}
         </div>

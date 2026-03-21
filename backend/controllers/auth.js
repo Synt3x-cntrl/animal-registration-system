@@ -1,4 +1,7 @@
 const User = require("../models/User");
+const Pet = require("../models/Pet");
+const Appointment = require("../models/Appointment");
+const MedicalRecord = require("../models/MedicalRecord");
 const bcrypt = require("bcryptjs");
 
 exports.register = async (req, res, next) => {
@@ -148,6 +151,36 @@ exports.updateUser = async (req, res, next) => {
         res.status(200).json({
             success: true,
             message: "Хэрэглэгчийн мэдээлэл шинэчлэгдлээ"
+        });
+    } catch (error) {
+        res.status(400).json({
+            success: false,
+            error: error.message,
+        });
+    }
+};
+
+exports.getAdminStats = async (req, res, next) => {
+    try {
+        const totalUsers = await User.countDocuments({ role: 'user' });
+        const totalDoctors = await User.countDocuments({ role: 'doctor' });
+        const totalPets = await Pet.countDocuments();
+        const totalAppointments = await Appointment.countDocuments();
+        const totalRecords = await MedicalRecord.countDocuments();
+
+        const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+        const petsLast24h = await Pet.countDocuments({ createdAt: { $gte: oneDayAgo } });
+
+        res.status(200).json({
+            success: true,
+            data: {
+                totalUsers,
+                totalDoctors,
+                totalPets,
+                totalAppointments,
+                totalRecords,
+                petsLast24h
+            }
         });
     } catch (error) {
         res.status(400).json({

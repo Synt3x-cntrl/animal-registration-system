@@ -9,12 +9,17 @@ function Register() {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
+  const [errorMsg, setErrorMsg] = useState("");
+  const [successMsg, setSuccessMsg] = useState("");
 
   const navigate = useNavigate();
 
   const handleRegister = async () => {
+    setErrorMsg("");
+    setSuccessMsg("");
+    
     if (!firstname || !lastname || !email || !phone || !password) {
-      alert("Бүх талбарыг бөглөнө үү");
+      setErrorMsg("Бүх талбарыг бөглөнө үү 🐾");
       return;
     }
 
@@ -48,32 +53,46 @@ function Register() {
 
       await response.json();
 
-      if (response.ok) {
-        alert("Амжилттай бүртгэгдлээ. Одоо нэвтэрч орно уу.");
+      setSuccessMsg("Амжилттай бүртгэгдлээ. Одоо нэвтэрч орно уу. 🐾");
+      setTimeout(() => {
         navigate("/login");
-      }
+      }, 2000);
+      
     } catch (error) {
-      alert("Алдаа гарлаа: " + error.message);
+      setErrorMsg(error.message + " 🐾");
     }
   };
 
   return (
     <div className="auth-page-wrapper">
-      <div className="auth-form-container">
-        <div className="auth-header-top">
-          <Link to="/" className="auth-back-btn">
-            &#8592;
-          </Link>
-          <div className="auth-top-link-text">
-            Бүртгэлтэй юу?
-            <Link to="/login" className="auth-top-link-action">
-              Нэвтрэх
+      <div className="auth-image-side"></div>
+      <div className="auth-form-side">
+        <div className="auth-form-container">
+          <div className="auth-header-top">
+            <Link to="/" className="auth-back-btn">
+              &#8592;
             </Link>
+            <div className="auth-top-link-text">
+              Бүртгэлтэй юу?
+              <Link to="/login" className="auth-top-link-action">
+                Нэвтрэх
+              </Link>
+            </div>
           </div>
-        </div>
 
-        <h1 className="auth-title">Бүртгүүлэх</h1>
-        <p className="auth-subtitle">Амьтны дэлгүүрт шинээр бүртгүүлэх</p>
+          <h1 className="auth-title">Бүртгүүлэх</h1>
+          <p className="auth-subtitle">Системд тавтай морил. Та өөрийн бүртгэлээр нэвтэрч амьтдынхаа мэдээллийг удирдана уу.</p>
+
+          {errorMsg && (
+            <div className="auth-error-msg">
+              <span>⚠️</span> {errorMsg}
+            </div>
+          )}
+          {successMsg && (
+            <div className="auth-success-msg">
+              <span>✅</span> {successMsg}
+            </div>
+          )}
 
         <div className="auth-input-group">
           <span className="auth-input-icon">👤</span>
@@ -149,6 +168,7 @@ function Register() {
         </div>
       </div>
     </div>
+  </div>
   );
 }
 

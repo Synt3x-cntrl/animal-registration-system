@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import API_URL from '../apiConfig';
 
-const MedicalForm = ({ onSuccess, prefillData, doctorName }) => {
+const MedicalForm = ({ onSuccess, prefillData, doctorName, doctorId }) => {
     const [formData, setFormData] = useState({
         ownerEmail: '',
         petName: '',
@@ -14,6 +14,11 @@ const MedicalForm = ({ onSuccess, prefillData, doctorName }) => {
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+
+    // Давтан үзлэгийн цаг захиалах state-үүд
+    const [wantFollowUp, setWantFollowUp] = useState(false);
+    const [followUpDate, setFollowUpDate] = useState('');
+    const [followUpReason, setFollowUpReason] = useState('Давтан үзлэг');
 
     // Захиалга дарахад автоматаар бөглөх
     useEffect(() => {
@@ -30,13 +35,19 @@ const MedicalForm = ({ onSuccess, prefillData, doctorName }) => {
         }
     }, [prefillData, doctorName]);
 
+    // Давтан үзлэгийн checkbox-ийг болиулбал утгыг нь цэвэрлэх
+    useEffect(() => {
+        if (!wantFollowUp) {
+            setFollowUpDate('');
+        }
+    }, [wantFollowUp]);
+
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
     const handleSubmit = async (e) => {
-
         e.preventDefault();
 
         if (!formData.ownerEmail) {
@@ -44,49 +55,80 @@ const MedicalForm = ({ onSuccess, prefillData, doctorName }) => {
             return;
         }
 
+        // Давтан үзлэг сонгосон бол огноог нь оруулсан байх шаардлагатай
+        if (wantFollowUp && !followUpDate) {
+            setError("Давтан үзлэгийн огноог оруулна уу эсвэл давтан үзлэгийн хэсгийг болиулна уу.");
+            return;
+        }
+
         setLoading(true);
         setError(null);
 
         try {
+            // 1. Эмнэлгийн түүх хадгалах
             const response = await fetch(`${API_URL}/medical-records`, {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(formData),
             });
 
             const data = await response.json();
 
-            if (response.ok) {
-                // Захиалгыг устгах
-                if (prefillData?._id) {
-                    await fetch(`${API_URL}/appointments/${prefillData._id}`, {
-                        method: "DELETE",
+            if (!response.ok) {
+                setError(data.error || "Алдаа гарлаа");
+                setLoading(false);
+                return;
+            }
+
+            // 2. Захиалгыг устгах (хэрэв prefillData._ ID байвал)
+            if (prefillData?._id) {
+                await fetch(`${API_URL}/appointments/${prefillData._id}`, {
+                    method: "DELETE",
+                });
+            }
+
+            // 3. Давтан үзлэгийн цаг захиалах (сонголттой)
+            if (wantFollowUp && followUpDate) {
+                const ownerId = prefillData?.ownerId?._id || prefillData?.ownerId;
+                const docId = doctorId || prefillData?.doctorId?._id || prefillData?.doctorId;
+
+                if (ownerId && docId) {
+                    await fetch(`${API_URL}/appointments`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            petName: formData.petName,
+                            reason: followUpReason,
+                            ownerId,
+                            doctorId: docId,
+                            date: followUpDate,
+                        }),
                     });
                 }
-
-                alert('Эмнэлгийн түүх амжилттай хадгалагдлаа! Захиалга устгагдлаа.');
-                setFormData({
-                    ownerEmail: '',
-                    petName: '',
-                    doctorName: doctorName || '',
-                    date: new Date().toISOString().split('T')[0],
-                    symptoms: '',
-                    diagnosis: '',
-                    treatment: '',
-                    notes: ''
-                });
-                if (onSuccess) onSuccess();
-            } else {
-                setError(data.error || "Алдаа гарлаа");
             }
+
+            alert('Эмнэлгийн түүх амжилттай хадгалагдлаа!' + (wantFollowUp && followUpDate ? ' Давтан үзлэгийн цаг захиалагдлаа.' : ''));
+            setFormData({
+                ownerEmail: '',
+                petName: '',
+                doctorName: doctorName || '',
+                date: new Date().toISOString().split('T')[0],
+                symptoms: '',
+                diagnosis: '',
+                treatment: '',
+                notes: ''
+            });
+            setWantFollowUp(false);
+            if (onSuccess) onSuccess();
         } catch (err) {
             setError("Сервертэй холбогдоход алдаа гарлаа: " + err.message);
         } finally {
             setLoading(false);
         }
     };
+
+    const inputStyle = { width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ced4da', boxSizing: 'border-box' };
+    const labelStyle = { display: 'block', marginBottom: '8px', color: '#555', fontWeight: 'bold' };
 
     return (
         <div style={{
@@ -108,19 +150,19 @@ const MedicalForm = ({ onSuccess, prefillData, doctorName }) => {
                 Эмнэлгийн үзлэгийн маягт
             </h2>
 
-            {error && <div style={{ color: 'red', marginBottom: '15px' }}>{error}</div>}
+            {error && <div style={{ color: 'red', marginBottom: '15px', padding: '10px', backgroundColor: '#fff5f5', borderRadius: '6px', border: '1px solid #ffcccc' }}>{error}</div>}
 
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
 
                 <div style={{ display: 'flex', gap: '20px' }}>
                     <div style={{ flex: 1 }}>
-                        <label style={{ display: 'block', marginBottom: '8px', color: '#555', fontWeight: 'bold' }}>Хэрэглэгчийн Имэйл:</label>
+                        <label style={labelStyle}>Хэрэглэгчийн Имэйл:</label>
                         <input
                             type="email"
                             name="ownerEmail"
                             value={formData.ownerEmail}
                             onChange={handleChange}
-                            style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ced4da', boxSizing: 'border-box' }}
+                            style={inputStyle}
                             placeholder="user@example.com"
                             required
                         />
@@ -129,77 +171,130 @@ const MedicalForm = ({ onSuccess, prefillData, doctorName }) => {
 
                 <div style={{ display: 'flex', gap: '20px' }}>
                     <div style={{ flex: 1 }}>
-                        <label style={{ display: 'block', marginBottom: '8px', color: '#555', fontWeight: 'bold' }}>Амьтны нэр / ID:</label>
+                        <label style={labelStyle}>Амьтны нэр / ID:</label>
                         <input
                             type="text"
                             name="petName"
                             value={formData.petName}
                             onChange={handleChange}
-                            style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ced4da', boxSizing: 'border-box' }}
+                            style={inputStyle}
                             required
                         />
                     </div>
-
                     <div style={{ flex: 1 }}>
-                        <label style={{ display: 'block', marginBottom: '8px', color: '#555', fontWeight: 'bold' }}>Огноо:</label>
+                        <label style={labelStyle}>Огноо:</label>
                         <input
                             type="date"
                             name="date"
                             value={formData.date}
                             onChange={handleChange}
-                            style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ced4da', boxSizing: 'border-box' }}
+                            style={inputStyle}
                             required
                         />
                     </div>
                 </div>
 
                 <div>
-                    <label style={{ display: 'block', marginBottom: '8px', color: '#555', fontWeight: 'bold' }}>Эмчийн нэр:</label>
+                    <label style={labelStyle}>Эмчийн нэр:</label>
                     <input
                         type="text"
                         name="doctorName"
                         value={formData.doctorName}
                         onChange={handleChange}
-                        style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ced4da', boxSizing: 'border-box', backgroundColor: '#f0f4f8', color: '#555' }}
+                        style={{ ...inputStyle, backgroundColor: '#f0f4f8', color: '#555' }}
                         readOnly
                         required
                     />
                 </div>
 
                 <div>
-                    <label style={{ display: 'block', marginBottom: '8px', color: '#555', fontWeight: 'bold' }}>Шинж тэмдэг:</label>
+                    <label style={labelStyle}>Шинж тэмдэг:</label>
                     <textarea
                         name="symptoms"
                         value={formData.symptoms}
                         onChange={handleChange}
-                        style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ced4da', boxSizing: 'border-box', minHeight: '80px' }}
+                        style={{ ...inputStyle, minHeight: '80px' }}
                         placeholder="Өвчний шинж тэмдгүүдийг бичнэ үү..."
                         required
                     />
                 </div>
 
                 <div>
-                    <label style={{ display: 'block', marginBottom: '8px', color: '#555', fontWeight: 'bold' }}>Онош:</label>
+                    <label style={labelStyle}>Онош:</label>
                     <textarea
                         name="diagnosis"
                         value={formData.diagnosis}
                         onChange={handleChange}
-                        style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ced4da', boxSizing: 'border-box', minHeight: '80px' }}
+                        style={{ ...inputStyle, minHeight: '80px' }}
                         placeholder="Эмчийн онош..."
                         required
                     />
                 </div>
 
                 <div>
-                    <label style={{ display: 'block', marginBottom: '8px', color: '#555', fontWeight: 'bold' }}>Эмчилгээ ба Зөвлөмж:</label>
+                    <label style={labelStyle}>Эмчилгээ ба Зөвлөмж:</label>
                     <textarea
                         name="treatment"
                         value={formData.treatment}
                         onChange={handleChange}
-                        style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ced4da', boxSizing: 'border-box', minHeight: '100px' }}
+                        style={{ ...inputStyle, minHeight: '100px' }}
                         placeholder="Хийх эмчилгээ, уух эм, зөвлөгөө..."
                         required
                     />
+                </div>
+
+                {/* ====== ДАВТАН ҮЗЛЭГИЙН ЦАГ ЗАХИАЛАХ (СОНГОЛТТОЙ) ====== */}
+                <div style={{
+                    border: '2px dashed #3498db',
+                    borderRadius: '10px',
+                    padding: '16px',
+                    backgroundColor: '#f0f7ff'
+                }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', userSelect: 'none' }}>
+                        <input
+                            type="checkbox"
+                            checked={wantFollowUp}
+                            onChange={e => setWantFollowUp(e.target.checked)}
+                            style={{ width: '18px', height: '18px', cursor: 'pointer', accentColor: '#3498db' }}
+                        />
+                        <span style={{ fontWeight: 'bold', color: '#2c3e50', fontSize: '15px' }}>
+                            🔄 Давтан үзлэгийн цаг захиалах <span style={{ fontWeight: 'normal', color: '#888', fontSize: '13px' }}>(сонголттой)</span>
+                        </span>
+                    </label>
+
+                    {wantFollowUp && (
+                        <div style={{ marginTop: '15px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+
+                            {/* Дурын огноо, цаг сонгох */}
+                            <div>
+                                <label style={{ ...labelStyle, color: '#2c3e50' }}>📆 Огноо, цаг сонгох:</label>
+                                <input
+                                    type="datetime-local"
+                                    value={followUpDate}
+                                    onChange={e => setFollowUpDate(e.target.value)}
+                                    style={inputStyle}
+                                />
+                            </div>
+
+                            {/* Давтан үзлэгийн шалтгаан */}
+                            <div>
+                                <label style={{ ...labelStyle, color: '#2c3e50' }}>📝 Шалтгаан:</label>
+                                <input
+                                    type="text"
+                                    value={followUpReason}
+                                    onChange={e => setFollowUpReason(e.target.value)}
+                                    style={inputStyle}
+                                    placeholder="Давтан үзлэг..."
+                                />
+                            </div>
+
+                            {followUpDate && (
+                                <div style={{ padding: '8px 12px', backgroundColor: '#d4edda', borderRadius: '6px', color: '#155724', fontSize: '13px' }}>
+                                    ✅ Давтан үзлэгийн цаг сонгогдлоо. Хадгалах үед захиалга автоматаар үүснэ.
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </div>
 
                 <button

@@ -11,3 +11,93 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+/* Mobile Responsive Utility Classes */
+.responsive-flex {
+  display: flex;
+}
+
+.responsive-flex-row {
+  flex-direction: row;
+}
+
+/* Mobile Menu Button */
+.mobile-menu-btn {
+  display: none;
+  background: #a2a2df;
+  color: white;
+  border: none;
+  padding: 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+  margin-bottom: 10px;
+  width: 100%;
+  font-weight: bold;
+}
+
+@media (max-width: 768px) {
+  .responsive-flex {
+    flex-direction: column !important;
+  }
+  
+  .responsive-flex-row {
+    flex-direction: column !important;
+  }
+  
+  .responsive-padding {
+    padding: 10px !important;
+  }
+  
+  .responsive-width {
+    width: 100% !important;
+    min-width: unset !important;
+  }
+
+  .responsive-text-center {
+    text-align: center !important;
+  }
+
+  .responsive-sidebar {
+    width: 100% !important;
+    height: auto !important;
+    border-right: none !important;
+    border-bottom: 2px solid #dee2e6 !important;
+  }
+
+  .responsive-content {
+    height: auto !important;
+    min-height: calc(100vh - 66px) !important;
+  }
+
+  .mobile-menu-btn {
+    display: block;
+  }
+
+  .sidebar-content-closed {
+    display: none !important;
+  }
+
+  .sidebar-content-open {
+    display: flex !important;
+    flex-direction: column;
+  }
+}
+
+/* Dark Mode Trick Using CSS Invert */
+html.dark-mode {
+  filter: invert(1) hue-rotate(180deg);
+  background-color: #111; /* Ensures the physical background is dark */
+}
+
+html.dark-mode body {
+  background-color: white; /* Inverted to almost black by html.dark-mode */
+}
+
+/* Invert images back to normal */
+html.dark-mode img,
+html.dark-mode video,
+html.dark-mode iframe {
+    filter: invert(1) hue-rotate(180deg);
+}
+
