@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import LoadingSpinner from "../components/LoadingSpinner";
 import PetCard from "../components/PetCard";
 import PetForm from "../components/PetForm";
+import PassportCard from "../components/PassportCard";
 import API_URL from "../apiConfig";
 
 function MyPets() {
@@ -85,6 +86,26 @@ function MyPets() {
         setEditingPet(null);
     };
 
+    const handleRequestPassport = async (petId) => {
+        try {
+            const response = await fetch(`${API_URL}/pets/${petId}/request-passport`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const data = await response.json();
+            if (response.ok) {
+                alert(data.message);
+                setPets(prev => prev.map(p => p._id === petId ? data.data : p));
+                setSelectedPet(data.data);
+            } else {
+                alert(data.error || "Алдаа гарлаа");
+            }
+        } catch (error) {
+            console.error("Пасспорт хүсэх үед алдаа гарлаа:", error);
+            alert("Пасспорт хүсэх үед алдаа гарлаа");
+        }
+    };
+
     if (!user) {
         return (
             <div style={{ marginTop: "50px", textAlign: "center", padding: "40px", backgroundColor: "white", borderRadius: "10px", boxShadow: "0 4px 6px rgba(0,0,0,0.05)" }}>
@@ -144,6 +165,34 @@ function MyPets() {
                             <div><span style={{ color: '#7f8c8d' }}>Үүлдэр:</span> <strong style={{ color: '#2c3e50' }}>{selectedPet.breed || 'Мэдэгдэхгүй'}</strong></div>
                             <div><span style={{ color: '#7f8c8d' }}>Өнгө:</span> <strong style={{ color: '#2c3e50' }}>{selectedPet.color || 'Мэдэгдэхгүй'}</strong></div>
                             <div><span style={{ color: '#7f8c8d' }}>Жин:</span> <strong style={{ color: '#2c3e50' }}>{selectedPet.weight ? `${selectedPet.weight} кг` : 'Мэдэгдэхгүй'}</strong></div>
+
+                            {/* Passport UI */}
+                            <div style={{ gridColumn: 'span 2', marginTop: '5px', padding: '20px', backgroundColor: '#f8f9fa', borderRadius: '16px', border: '1px solid #e9ecef' }}>
+                                <h4 style={{ margin: '0 0 15px 0', color: '#2c3e50', fontSize: '18px' }}>🛂 Амьтны Пасспорт</h4>
+                                {(!selectedPet.passportStatus || selectedPet.passportStatus === 'none' || selectedPet.passportStatus === 'rejected') && (
+                                    <div>
+                                        {selectedPet.passportStatus === 'rejected' && <p style={{ color: '#e74c3c', marginTop: 0, marginBottom: '10px', fontSize: '14px' }}>Өмнөх хүсэлт цуцлагдсан байна.</p>}
+                                        <button 
+                                            onClick={() => handleRequestPassport(selectedPet._id)}
+                                            style={{ padding: '10px 20px', backgroundColor: '#3498db', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '15px', transition: '0.2s' }}
+                                            onMouseEnter={(e) => e.target.style.backgroundColor = '#2980b9'}
+                                            onMouseLeave={(e) => e.target.style.backgroundColor = '#3498db'}
+                                        >
+                                            Пасспорт хүсэх
+                                        </button>
+                                    </div>
+                                )}
+                                {selectedPet.passportStatus === 'requested' && (
+                                    <div style={{ color: '#f39c12', fontWeight: 'bold', fontSize: '15px', padding: '10px', backgroundColor: 'rgba(243, 156, 18, 0.1)', borderRadius: '8px' }}>
+                                        ⏳ Хүсэлт илгээгдсэн, эмч зөвшөөрөхийг хүлээж байна...
+                                    </div>
+                                )}
+                                {selectedPet.passportStatus === 'approved' && (
+                                    <div style={{ display: 'flex', justifyContent: 'center', marginTop: '10px' }}>
+                                        <PassportCard pet={selectedPet} />
+                                    </div>
+                                )}
+                            </div>
 
                             {getNextAppointment(selectedPet.name) ? (
                                 <div style={{ color: '#e74c3c', gridColumn: 'span 2' }}>📅 <span style={{ color: '#7f8c8d' }}>Дараагийн үзлэг:</span> <strong>{new Date(getNextAppointment(selectedPet.name)).toLocaleDateString()} {new Date(getNextAppointment(selectedPet.name)).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</strong></div>

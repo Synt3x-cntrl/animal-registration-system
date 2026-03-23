@@ -11,6 +11,9 @@ const PetSchema = new mongoose.Schema({
     weight: { type: Number },
     imageUrl: { type: String },
     owner: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    passportStatus: { type: String, enum: ['none', 'requested', 'approved', 'rejected'], default: 'none' },
+    passportId: { type: String },
+    passportIssueDate: { type: Date },
     createdAt: { type: Date, default: Date.now }
 });
 

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import API_URL from '../apiConfig';
 import PetMedicalTimeline from './PetMedicalTimeline';
 
-const DoctorFastSearch = () => {
+const DoctorFastSearch = ({ onExamine }) => {
     const [query, setQuery] = useState('');
     const [results, setResults] = useState([]);
     const [isSearching, setIsSearching] = useState(false);
@@ -80,25 +80,44 @@ const DoctorFastSearch = () => {
                     {results.map(pet => (
                         <div 
                             key={pet._id}
-                            onClick={() => {
-                                setSelectedPet(pet);
-                                setQuery('');
-                                setResults([]);
-                            }}
                             style={{
                                 display: 'flex', alignItems: 'center', padding: '15px',
-                                borderBottom: '1px solid #f1f1f1', cursor: 'pointer',
+                                borderBottom: '1px solid #f1f1f1',
                                 transition: 'background-color 0.2s'
                             }}
                             onMouseEnter={e => e.currentTarget.style.backgroundColor = '#e3f2fd'}
                             onMouseLeave={e => e.currentTarget.style.backgroundColor = 'white'}
                         >
                             <div style={{ fontSize: '24px', marginRight: '15px' }}>🐾</div>
-                            <div>
+                            <div style={{ flex: 1 }}>
                                 <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#2c3e50' }}>{pet.name}</div>
                                 <div style={{ fontSize: '13px', color: '#7f8c8d' }}>
                                     Эзэмшигч: {pet.owner?.firstname} {pet.owner?.lastname} ({pet.owner?.phone})
                                 </div>
+                            </div>
+                            <div style={{ display: 'flex', gap: '8px' }}>
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setSelectedPet(pet);
+                                    }}
+                                    style={{ padding: '6px 12px', backgroundColor: '#3498db', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}
+                                >
+                                    Түүх
+                                </button>
+                                {onExamine && (
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            onExamine(pet);
+                                            setQuery('');
+                                            setResults([]);
+                                        }}
+                                        style={{ padding: '6px 12px', backgroundColor: '#27ae60', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}
+                                    >
+                                        Үзлэг хийх
+                                    </button>
+                                )}
                             </div>
                         </div>
                     ))}

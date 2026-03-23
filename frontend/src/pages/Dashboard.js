@@ -3,6 +3,7 @@ import MedicalForm from "../components/MedicalForm";
 import DoctorAppointmentsList from "../components/DoctorAppointmentsList";
 import DoctorDailySummariesList from "../components/DoctorDailySummariesList";
 import DoctorFastSearch from "../components/DoctorFastSearch";
+import PassportRequestRow from "../components/PassportRequestRow";
 import API_URL from "../apiConfig";
 import LoadingSpinner from "../components/LoadingSpinner";
 
@@ -13,6 +14,7 @@ function Dashboard() {
 
   const [stats, setStats] = useState(null);
   const [loadingStats, setLoadingStats] = useState(false);
+  const [passportRequests, setPassportRequests] = useState([]);
 
   useEffect(() => {
     // Вэб ачааллахад theme-ийг тохируулах
@@ -24,6 +26,9 @@ function Dashboard() {
       const parsedUser = JSON.parse(storedUser);
       setUser(parsedUser);
       fetchDashboardStats(parsedUser);
+      if (parsedUser.role === 'doctor') {
+        fetchPassportRequests();
+      }
     }
   }, []);
 
@@ -47,6 +52,38 @@ function Dashboard() {
       console.error(err);
     } finally {
       setLoadingStats(false);
+    }
+  };
+
+  const fetchPassportRequests = async () => {
+    try {
+      const res = await fetch(`${API_URL}/pets/passport-requests`);
+      const data = await res.json();
+      if (data.success && Array.isArray(data.data)) {
+        setPassportRequests(data.data);
+      }
+    } catch (err) {
+      console.error("Пасспорт хүсэлт татахад алдаа:", err);
+    }
+  };
+
+  const handleEvaluatePassport = async (petId, status) => {
+    if (!window.confirm(`Үүнийг ${status === 'approved' ? 'Зөвшөөрөх' : 'Цуцлах'}-дөө итгэлтэй байна уу?`)) return;
+    try {
+      const res = await fetch(`${API_URL}/pets/${petId}/evaluate-passport`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert("Амжилттай хадгалагдлаа");
+        fetchPassportRequests();
+      } else {
+        alert(data.error || "Алдаа гарлаа");
+      }
+    } catch (err) {
+      alert("Алдаа: " + err.message);
     }
   };
 
@@ -149,7 +186,15 @@ function Dashboard() {
               >
                 {/* Хурдан хайлт */}
                 <div style={{ width: '100%', marginBottom: '10px' }}>
-                  <DoctorFastSearch />
+                  <DoctorFastSearch 
+                    onExamine={(pet) => {
+                      setSelectedAppointment({
+                        petName: pet.name,
+                        ownerId: pet.owner,
+                        date: new Date().toISOString()
+                      });
+                    }}
+                  />
                 </div>
 
                 {/* Зүүн: Миний захиалгууд */}
@@ -182,8 +227,7 @@ function Dashboard() {
                         color: "#1565c0",
                       }}
                     >
-                      ✅ <strong>{selectedAppointment.petName}</strong> -ийн
-                      захиалга сонгогдлоо. Маягт автоматаар бөглөгдлөө.
+                      ✅ Урьдчилж бөглөх дата (<strong>{selectedAppointment.petName}</strong>) орууллаа.
                     </div>
                   )}
                   <div style={{ marginTop: "20px" }}>
@@ -202,6 +246,27 @@ function Dashboard() {
                 {/* Доороо: Өдрийн тайлангууд */}
                 <div style={{ flex: "1 1 100%", width: "100%", marginTop: "20px" }}>
                   <DoctorDailySummariesList doctorId={user._id} doctorName={`${user.firstname} ${user.lastname}`} />
+                </div>
+
+                {/* Баруун Доороо: Пасспорт хүсэлтүүд (Доктор) */}
+                <div style={{ flex: "1 1 100%", width: "100%", marginTop: "20px", padding: '20px', backgroundColor: 'white', borderRadius: '16px', boxShadow: '0 4px 15px rgba(0,0,0,0.05)', border: '1px solid #f0f0f0' }}>
+                  <h3 style={{ borderBottom: "2px solid #27ae60", paddingBottom: "10px", color: "#2c3e50" }}>
+                    🛂 Пасспортын хүсэлтүүд
+                    {passportRequests.length > 0 && (
+                      <span style={{ backgroundColor: '#e74c3c', color: 'white', fontSize: '12px', padding: '2px 8px', borderRadius: '20px', marginLeft: '10px' }}>{passportRequests.length}</span>
+                    )}
+                  </h3>
+                  {passportRequests.length === 0 ? (
+                    <div style={{ color: '#bbb', textAlign: 'center', padding: '20px 0', fontSize: '14px', fontStyle: 'italic' }}>
+                      Одоогоор шийдвэрлэх хүсэлт алга байна.
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                      {passportRequests.map(req => (
+                        <PassportRequestRow key={req._id} request={req} onEvaluate={handleEvaluatePassport} />
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             )}

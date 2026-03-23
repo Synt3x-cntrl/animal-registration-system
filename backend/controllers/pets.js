@@ -145,3 +145,60 @@ exports.searchPets = async (req, res, next) => {
         });
     }
 };
+
+exports.requestPassport = async (req, res, next) => {
+    try {
+        const pet = await Pet.findById(req.params.id);
+        if (!pet) {
+            return res.status(404).json({ success: false, error: "Амьтан олдсонгүй" });
+        }
+        
+        if (pet.passportStatus !== 'none' && pet.passportStatus !== 'rejected') {
+            return res.status(400).json({ success: false, error: "Пасспорт аль хэдийн хүсэлт илгээгдсэн эсвэл зөвшөөрөгдсөн байна" });
+        }
+
+        pet.passportStatus = 'requested';
+        await pet.save();
+
+        res.status(200).json({ success: true, data: pet, message: "Пасспортын хүсэлт амжилттай илгээгдлээ" });
+    } catch (error) {
+        res.status(400).json({ success: false, error: error.message });
+    }
+};
+
+exports.getPassportRequests = async (req, res, next) => {
+    try {
+        const pets = await Pet.find({ passportStatus: 'requested' }).populate('owner', 'firstname lastname phone email');
+        
+        res.status(200).json({ success: true, count: pets.length, data: pets });
+    } catch (error) {
+        res.status(400).json({ success: false, error: error.message });
+    }
+};
+
+exports.evaluatePassport = async (req, res, next) => {
+    try {
+        const { status } = req.body; // 'approved' or 'rejected'
+        if (!['approved', 'rejected'].includes(status)) {
+            return res.status(400).json({ success: false, error: "Буруу төлөв байна" });
+        }
+
+        const pet = await Pet.findById(req.params.id);
+        if (!pet) {
+            return res.status(404).json({ success: false, error: "Амьтан олдсонгүй" });
+        }
+
+        pet.passportStatus = status;
+        if (status === 'approved') {
+            // Generate a random passport ID (e.g., PAS-MONGOLIA-random)
+            pet.passportId = 'PAS-MN-' + Math.random().toString(36).substr(2, 6).toUpperCase();
+            pet.passportIssueDate = new Date();
+        }
+
+        await pet.save();
+
+        res.status(200).json({ success: true, data: pet, message: "Хүсэлт амжилттай шийдвэрлэгдлээ" });
+    } catch (error) {
+        res.status(400).json({ success: false, error: error.message });
+    }
+};

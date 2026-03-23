@@ -6,6 +6,7 @@ import {
   PieChart, Pie, Cell,
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer
 } from "recharts";
+import PassportRequestRow from "../components/PassportRequestRow";
 
 import "../styles/auth.css";
 
@@ -147,7 +148,6 @@ function DoctorRow({ doctor }) {
     </div>
   );
 }
-
 function AdminDashboard() {
   const [user, setUser] = useState(null);
   const navigate = useNavigate();
@@ -156,6 +156,7 @@ function AdminDashboard() {
   const [loadingStats, setLoadingStats] = useState(false);
   const [recentPets, setRecentPets] = useState([]);
   const [doctors, setDoctors] = useState([]);
+  const [passportRequests, setPassportRequests] = useState([]);
 
   const [doctorFirstname, setDoctorFirstname] = useState("");
   const [doctorLastname, setDoctorLastname] = useState("");
@@ -201,6 +202,18 @@ function AdminDashboard() {
     }
   };
 
+  const fetchPassportRequests = async () => {
+    try {
+      const res = await fetch(`${API_URL}/pets/passport-requests`);
+      const data = await res.json();
+      if (data.success && Array.isArray(data.data)) {
+        setPassportRequests(data.data);
+      }
+    } catch (err) {
+      console.error("Пасспорт хүсэлт татахад алдаа:", err);
+    }
+  };
+
   useEffect(() => {
     const loggedUser = localStorage.getItem("user");
     if (loggedUser) {
@@ -213,6 +226,7 @@ function AdminDashboard() {
         fetchStats();
         fetchRecentPets();
         fetchDoctors();
+        fetchPassportRequests();
       }
     } else {
       navigate("/login");
@@ -250,6 +264,26 @@ function AdminDashboard() {
       }
     } catch (error) {
       alert("Сервертэй холбогдоход алдаа гарлаа: " + error.message);
+    }
+  };
+
+  const handleEvaluatePassport = async (petId, status) => {
+    if (!window.confirm(`Үүнийг ${status === 'approved' ? 'Зөвшөөрөх' : 'Цуцлах'}-дөө итгэлтэй байна уу?`)) return;
+    try {
+      const res = await fetch(`${API_URL}/pets/${petId}/evaluate-passport`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert("Амжилттай хадгалагдлаа");
+        fetchPassportRequests();
+      } else {
+        alert(data.error || "Алдаа гарлаа");
+      }
+    } catch (err) {
+      alert("Алдаа: " + err.message);
     }
   };
 
@@ -341,6 +375,27 @@ function AdminDashboard() {
             recentPets.map(pet => <RecentPetRow key={pet._id} pet={pet} />)
           )}
         </div>
+      </div>
+
+      {/* Passport Requests Section */}
+      <div style={{ marginBottom: '36px', backgroundColor: 'white', padding: '26px', borderRadius: '20px', boxShadow: '0 6px 24px rgba(0,0,0,0.07)', border: '1px solid #f0f0f0' }}>
+        <h3 style={{ color: '#444', marginTop: 0, marginBottom: '20px', fontSize: '20px', fontWeight: '800', display: 'flex', alignItems: 'center', gap: '10px' }}>
+          🛂 Пасспортын хүсэлтүүд
+          {passportRequests.length > 0 && (
+            <span style={{ backgroundColor: '#e74c3c', color: 'white', fontSize: '12px', padding: '2px 8px', borderRadius: '20px' }}>{passportRequests.length}</span>
+          )}
+        </h3>
+        {passportRequests.length === 0 ? (
+          <div style={{ color: '#bbb', textAlign: 'center', padding: '40px 0', fontSize: '16px', backgroundColor: '#f9f9fc', borderRadius: '12px', border: '2px dashed #ede9fe' }}>
+            🎉 Одоогоор шийдвэрлэх хүсэлт алга байна.
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            {passportRequests.map(req => (
+              <PassportRequestRow key={req._id} request={req} onEvaluate={handleEvaluatePassport} />
+            ))}
+          </div>
+        )}
       </div>
 
       <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
