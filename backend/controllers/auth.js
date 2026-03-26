@@ -3,6 +3,9 @@ const Pet = require("../models/Pet");
 const Appointment = require("../models/Appointment");
 const MedicalRecord = require("../models/MedicalRecord");
 const bcrypt = require("bcryptjs");
+const { OAuth2Client } = require("google-auth-library");
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
 
 exports.register = async (req, res, next) => {
     try {
@@ -189,3 +192,49 @@ exports.getAdminStats = async (req, res, next) => {
         });
     }
 };
+
+exports.googleLogin = async (req, res, next) => {
+    try {
+        const { idToken } = req.body;
+
+        if (!idToken) {
+            return res.status(400).json({ success: false, error: "Token шаардлагатай" });
+        }
+
+        const ticket = await client.verifyIdToken({
+            idToken,
+            audience: process.env.GOOGLE_CLIENT_ID,
+        });
+
+        const { email, given_name, family_name, picture } = ticket.getPayload();
+
+        let user = await User.findOne({ email });
+
+        if (!user) {
+            // Create user if not exists
+            user = await User.create({
+                firstname: given_name,
+                lastname: family_name || "",
+                email,
+                role: "user",
+                imageUrl: picture
+            });
+        }
+
+        const userObj = user.toObject();
+        if (userObj.password) delete userObj.password;
+
+        res.status(200).json({
+            success: true,
+            message: "Google-ээр амжилттай нэвтэрлээ",
+            user: userObj
+        });
+    } catch (error) {
+        console.error("Google login error:", error);
+        res.status(400).json({
+            success: false,
+            error: "Google нэвтрэлт амжилтгүй боллоо"
+        });
+    }
+};
+

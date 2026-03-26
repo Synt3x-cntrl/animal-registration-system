@@ -1,5 +1,5 @@
 import "../styles/auth.css";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import API_URL from "../apiConfig";
 
@@ -8,7 +8,45 @@ function Login() {
   const [upass, setPass] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
 
+  const GOOGLE_CLIENT_ID = "your_google_client_id_here"; // Солих шаардлагатай
+
+  useEffect(() => {
+    /* global google */
+    if (window.google) {
+      google.accounts.id.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        callback: handleGoogleResponse
+      });
+
+      google.accounts.id.renderButton(
+        document.getElementById("google-btn-container"),
+        { theme: "outline", size: "large", width: "100%" }
+      );
+    }
+  }, []);
+
+  const handleGoogleResponse = async (response) => {
+    try {
+      const res = await fetch(`${API_URL}/auth/google`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ idToken: response.credential })
+      });
+
+      const data = await res.json();
+      if (data.success && data.user) {
+        localStorage.setItem("user", JSON.stringify(data.user));
+        window.location.href = "/dashboard";
+      } else {
+        setErrorMsg(data.error || "Google-ээр нэвтрэхэд алдаа гарлаа");
+      }
+    } catch (err) {
+      setErrorMsg("Сервертэй холбогдоход алдаа гарлаа");
+    }
+  };
+
   const handleLogin = async () => {
+    // ... (existing code for manual login)
     setErrorMsg("");
     try {
       if (!email || !upass) {
@@ -97,17 +135,17 @@ function Login() {
           <span className="auth-input-right-icon eye">👁️</span>
         </div>
 
-        <div className="auth-submit-row">
-          <button className="auth-submit-btn" onClick={handleLogin}>
+        <div className="auth-submit-row" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <button className="auth-submit-btn" onClick={handleLogin} style={{ width: '100%' }}>
             Нэвтрэх <span>→</span>
           </button>
 
-          <span className="auth-or-text">Эсвэл</span>
-
-          <div className="auth-social-btns">
-            <button className="auth-social-btn">f</button>
-            <button className="auth-social-btn">G</button>
+          <div style={{ position: 'relative', textAlign: 'center', margin: '10px 0' }}>
+            <hr style={{ border: '0.5px solid #eee' }} />
+            <span style={{ position: 'absolute', top: '-10px', left: '50%', transform: 'translateX(-50%)', backgroundColor: 'white', padding: '0 10px', color: '#aaa', fontSize: '13px' }}>Эсвэл</span>
           </div>
+
+          <div id="google-btn-container" style={{ width: '100%' }}></div>
         </div>
       </div>
     </div>
@@ -116,3 +154,4 @@ function Login() {
 }
 
 export default Login;
+
