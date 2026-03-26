@@ -8,7 +8,7 @@ function Login() {
   const [upass, setPass] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
 
-  const GOOGLE_CLIENT_ID = "your_google_client_id_here"; // Солих шаардлагатай
+  const GOOGLE_CLIENT_ID = "311946659040-uvm88bhd0g0bpme9u3elr07a1amlhi73.apps.googleusercontent.com";
 
   useEffect(() => {
     /* global google */
