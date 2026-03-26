@@ -13,6 +13,9 @@ import SettingsPage from "./pages/SettingsPage";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminUsers from "./pages/AdminUsers";
 import AdminPets from "./pages/AdminPets";
+import DoctorExamination from "./pages/DoctorExamination";
+import DoctorDailyReports from "./pages/DoctorDailyReports";
+import Pricing from "./pages/Pricing";
 
 import Navbar from "./components/Navbar";
 import Sidebar from "./components/Sidebar";
@@ -84,6 +87,9 @@ function App() {
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/admin/users" element={<AdminUsers />} />
           <Route path="/admin/pets" element={<AdminPets />} />
+          <Route path="/doctor/examination" element={<DoctorExamination />} />
+          <Route path="/doctor/daily-reports" element={<DoctorDailyReports />} />
+          <Route path="/pricing" element={<Pricing />} />
         </Routes>
       </Layout>
     </BrowserRouter>

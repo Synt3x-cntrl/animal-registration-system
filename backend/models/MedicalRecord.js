@@ -7,6 +7,8 @@ const MedicalRecordSchema = new mongoose.Schema({
     symptoms: { type: String },
     diagnosis: { type: String },
     treatment: { type: String },
+    treatments: [{ type: String }],
+    notes: { type: String },
     ownerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     createdAt: { type: Date, default: Date.now }
 });

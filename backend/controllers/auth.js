@@ -112,7 +112,7 @@ exports.getUsers = async (req, res, next) => {
     } catch (error) {
         res.status(400).json({
             success: false,
-            error: error.message,
+            error: "Хэрэглэгчдийн мэдээллийг татахад алдаа гарлаа",
         });
     }
 };
@@ -185,7 +185,7 @@ exports.getAdminStats = async (req, res, next) => {
     } catch (error) {
         res.status(400).json({
             success: false,
-            error: error.message,
+            error: "Админ статистик татахад алдаа гарлаа",
         });
     }
 };

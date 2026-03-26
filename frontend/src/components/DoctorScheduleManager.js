@@ -117,9 +117,9 @@ function DoctorScheduleManager({ doctorId }) {
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                             {bookedAppointments.map((appt) => {
                                 const d = new Date(appt.date || appt.scheduleDate);
-                                const ownerName = appt.ownerName || (appt.owner ? `${appt.owner.firstname || ''} ${appt.owner.lastname || ''}`.trim() : 'Мэдэгдэхгүй');
-                                const ownerEmail = appt.ownerEmail || appt.owner?.email || '—';
-                                const ownerPhone = appt.ownerPhone || appt.owner?.phone || '—';
+                                const ownerName = appt.ownerName || (appt.ownerId ? `${appt.ownerId.firstname || ''} ${appt.ownerId.lastname || ''}`.trim() : 'Мэдэгдэхгүй');
+                                const ownerEmail = appt.ownerEmail || appt.ownerId?.email || '—';
+                                const ownerPhone = appt.ownerPhone || appt.ownerId?.phone || '—';
                                 const petName = appt.petName || '—';
 
                                 return (

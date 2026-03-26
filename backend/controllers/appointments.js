@@ -1,15 +1,16 @@
 const Appointment = require("../models/Appointment");
 const DoctorSchedule = require("../models/DoctorSchedule");
 const User = require("../models/User");
+const { cleanupExpiredData } = require("../utils/cleanup");
 
 exports.createAppointment = async (req, res, next) => {
     try {
-        const { petName, reason, ownerId, doctorId, scheduleId, date } = req.body;
+        const { petName, petId, reason, ownerId, doctorId, scheduleId, date, serviceType } = req.body;
 
-        if (!ownerId || !doctorId) {
+        if (!petId || !ownerId) {
             return res.status(400).json({
                 success: false,
-                error: "Эзэмшигчийн ID, Эмчийн ID заавал шаардлагатай",
+                error: "Амьтны ID болон эзэмшигчийн ID заавал шаардлагатай",
             });
         }
 
@@ -42,10 +43,27 @@ exports.createAppointment = async (req, res, next) => {
             });
         }
 
+        // --- Double Booking Prevention ---
+        const existingAppointment = await Appointment.findOne({ 
+            date: apptDate, 
+            doctorId: doctorId || null,
+            status: { $ne: 'Cancelled' } 
+        });
+
+        if (existingAppointment) {
+            return res.status(400).json({
+                success: false,
+                error: "Энэ цаг дээр захиалга аль хэдийн хийгдсэн байна. Өөр цаг сонгоно уу.",
+            });
+        }
+        // ---------------------------------
+
         const newAppointment = await Appointment.create({
             petName,
+            petId,
             date: apptDate,
             reason,
+            serviceType: serviceType || 'Examination',
             ownerId,
             doctorId,
             scheduleId
@@ -71,13 +89,14 @@ exports.createAppointment = async (req, res, next) => {
     } catch (error) {
         res.status(400).json({
             success: false,
-            error: error.message,
+            error: error.message.includes("validation") ? "Мэдээлэл дутуу эсвэл буруу байна" : error.message,
         });
     }
 };
 
 exports.getUserAppointments = async (req, res, next) => {
     try {
+        await cleanupExpiredData();
         const appointments = await Appointment.find({ ownerId: req.params.userId })
             .populate('doctorId', 'firstname lastname')
             .sort({ date: 1 })
@@ -98,8 +117,15 @@ exports.getUserAppointments = async (req, res, next) => {
 
 exports.getDoctorAppointments = async (req, res, next) => {
     try {
-        const appointments = await Appointment.find({ doctorId: req.params.doctorId })
+        await cleanupExpiredData();
+        const appointments = await Appointment.find({
+            $or: [
+                { doctorId: req.params.doctorId },
+                { doctorId: null }
+            ]
+        })
             .populate('ownerId', 'firstname lastname phone email')
+            .populate('petId', 'name species breed gender color birthdate age weight imageUrl')
             .sort({ date: 1 })
             .lean();
 
@@ -118,6 +144,7 @@ exports.getDoctorAppointments = async (req, res, next) => {
 
 exports.deleteAppointment = async (req, res, next) => {
     try {
+        const { received } = req.query;
         const apptDoc = await Appointment.findById(req.params.id);
 
         if (!apptDoc) {
@@ -125,13 +152,117 @@ exports.deleteAppointment = async (req, res, next) => {
         }
 
         if (apptDoc.scheduleId) {
-            await DoctorSchedule.findByIdAndUpdate(apptDoc.scheduleId, { isBooked: false });
+            if (received === 'true') {
+                // If service was received, delete the schedule slot permanently
+                await DoctorSchedule.findByIdAndDelete(apptDoc.scheduleId);
+            } else {
+                // If just cancelled, make it available again
+                await DoctorSchedule.findByIdAndUpdate(apptDoc.scheduleId, { isBooked: false });
+            }
         }
 
         await Appointment.findByIdAndDelete(req.params.id);
 
-        res.status(200).json({ success: true, message: "Захиалга амжилттай устгагдлаа" });
+        res.status(200).json({ 
+            success: true, 
+            message: received === 'true' ? "Үйлчилгээ дуусч, цаг бүрмөсөн устлаа" : "Захиалга амжилттай цуцлагдлаа" 
+        });
     } catch (error) {
         res.status(400).json({ success: false, error: error.message });
+    }
+};
+
+exports.updateAppointmentStatus = async (req, res, next) => {
+    try {
+        const { status } = req.body;
+        const appointment = await Appointment.findByIdAndUpdate(
+            req.params.id,
+            { status },
+            { new: true, runValidators: true }
+        ).populate('doctorId', 'firstname lastname');
+
+        if (!appointment) {
+            return res.status(404).json({ success: false, error: "Захиалга олдсонгүй" });
+        }
+
+        // If marked as completed, create a medical record entry and then DELETE the appointment/schedule
+        if (status === 'Completed') {
+            try {
+                // Pre-validation to ensure data integrity
+                if (!appointment.petName || !appointment.ownerId) {
+                    return res.status(400).json({ success: false, error: "Захиалгын мэдээлэл дутуу байна (Амьтны нэр эсвэл Эзэмшигчийг олох боломжгүй)" });
+                }
+
+                const MedicalRecord = require("../models/MedicalRecord");
+                const serviceNames = {
+                    'Bathing': '🛁 Усанд оруулах',
+                    'Grooming': '✂️ Үс засах / Гоо сайхан',
+                    'NailClipping': '🐾 Хумс авах',
+                    'Examination': '🩺 Эмчийн үзлэг'
+                };
+                
+                const doctorName = appointment.doctorId 
+                    ? `${appointment.doctorId.firstname} ${appointment.doctorId.lastname}`
+                    : 'Манай ажилтан';
+
+                // 1. Create history record
+                await MedicalRecord.create({
+                    petName: appointment.petName,
+                    doctorName: doctorName,
+                    date: appointment.date,
+                    diagnosis: serviceNames[appointment.serviceType] || appointment.serviceType || 'Үйлчилгээ',
+                    treatment: 'Амжилттай хийгдсэн',
+                    notes: appointment.reason || '',
+                    ownerId: appointment.ownerId
+                });
+
+                // 2. Delete schedule slot
+                if (appointment.scheduleId) {
+                    await DoctorSchedule.findByIdAndDelete(appointment.scheduleId);
+                }
+
+                // 3. Delete the appointment
+                await Appointment.findByIdAndDelete(req.params.id);
+
+                return res.status(200).json({
+                    success: true,
+                    message: "Үйлчилгээ дууссан тул тэмдэглэл үүсэж, цаг устлаа.",
+                    data: null
+                });
+
+            } catch (err) {
+                console.error("Critical error in updateAppointmentStatus completion block:", err);
+                return res.status(500).json({ 
+                    success: false, 
+                    error: `Түүх үүсгэх эсвэл цаг устгахад алдаа гарлаа: ${err.message}` 
+                });
+            }
+        }
+
+        res.status(200).json({
+            success: true,
+            data: appointment,
+        });
+    } catch (error) {
+        res.status(400).json({ success: false, error: error.message });
+    }
+};
+
+exports.getAllAppointments = async (req, res, next) => {
+    try {
+        await cleanupExpiredData();
+        const appointments = await Appointment.find()
+            .populate('ownerId', 'firstname lastname phone email')
+            .populate('doctorId', 'firstname lastname')
+            .sort({ date: 1 })
+            .lean();
+
+        res.status(200).json({
+            success: true,
+            count: appointments.length,
+            data: appointments,
+        });
+    } catch (error) {
+        res.status(400).json({ success: false, error: "Мэдээлэл татахад алдаа гарлаа" });
     }
 };

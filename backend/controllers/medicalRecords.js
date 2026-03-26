@@ -3,7 +3,7 @@ const User = require("../models/User");
 
 exports.createRecord = async (req, res, next) => {
     try {
-        const { petName, doctorName, date, symptoms, diagnosis, treatment, ownerEmail, ownerId } = req.body;
+        const { petName, doctorName, date, symptoms, diagnosis, treatment, treatments, notes, ownerEmail, ownerId } = req.body;
 
         let finalOwnerId = ownerId;
 
@@ -32,6 +32,8 @@ exports.createRecord = async (req, res, next) => {
             symptoms,
             diagnosis,
             treatment,
+            treatments: treatments || [],
+            notes,
             ownerId: finalOwnerId
         });
 
@@ -55,7 +57,7 @@ exports.createRecord = async (req, res, next) => {
     } catch (error) {
         res.status(400).json({
             success: false,
-            error: error.message,
+            error: "Тэмдэглэл хадгалахад алдаа гарлаа",
         });
     }
 };
@@ -82,7 +84,7 @@ exports.getUserRecords = async (req, res, next) => {
     } catch (error) {
         res.status(400).json({
             success: false,
-            error: error.message,
+            error: "Тэмдэглэлүүдийг татахад алдаа гарлаа",
         });
     }
 };

@@ -100,6 +100,7 @@ const Sidebar = () => {
                         ) : user?.role === 'doctor' ? (
                             <>
                                 <li><Link to="/appointments" style={linkStyle('/appointments')}><span>🕐</span> Цаг оруулах</Link></li>
+                                <li><Link to="/doctor/daily-reports" style={linkStyle('/doctor/daily-reports')}><span>📊</span> Өдрийн тайлан</Link></li>
                             </>
                         ) : (
                             <>
@@ -107,6 +108,15 @@ const Sidebar = () => {
                                 <li><Link to="/appointments" style={linkStyle('/appointments')}><span>📅</span> Цаг захиалга</Link></li>
                             </>
                         )}
+
+                        <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: '11px', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px', marginTop: '20px', marginBottom: '8px', paddingLeft: '14px' }}>
+                            Мэдээлэл
+                        </div>
+                        <li>
+                            <Link to="/pricing" style={linkStyle('/pricing')}>
+                                <span>💰</span> Үнийн санал
+                            </Link>
+                        </li>
                     </ul>
 
                 </nav>

@@ -32,7 +32,7 @@ exports.createPet = async (req, res, next) => {
     } catch (error) {
         res.status(400).json({
             success: false,
-            error: error.message,
+            error: "Амьтны мэдээлэл хадгалахад алдаа гарлаа",
         });
     }
 };

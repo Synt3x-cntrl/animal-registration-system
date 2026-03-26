@@ -145,9 +145,12 @@ const UserAppointmentsList = ({ userId, refreshKey }) => {
                                         </span>
                                     </div>
                                     <div style={{ color: '#555', fontSize: '14px', marginBottom: '4px' }}>
-                                        🩺 Эмч: {appt.doctorId
+                                        ⚙️ Үйлчилгээ: {appt.serviceType === 'Bathing' ? '🛁 Усанд оруулах' : appt.serviceType === 'Grooming' ? '✂️ Үс засах' : '🩺 Үзлэг'}
+                                    </div>
+                                    <div style={{ color: '#555', fontSize: '14px', marginBottom: '4px' }}>
+                                        👤 {appt.serviceType === 'Examination' ? 'Эмч' : 'Ажилтан'}: {appt.doctorId
                                             ? `${appt.doctorId.firstname} ${appt.doctorId.lastname}`
-                                            : 'Мэдээлэл байхгүй'}
+                                            : (appt.serviceType === 'Examination' ? 'Мэдээлэл байхгүй' : 'Манай ажилтан')}
                                     </div>
                                     <div style={{ color: '#555', fontSize: '14px', marginBottom: '4px' }}>
                                         📅 Цаг: {formatDate(appt.date)}

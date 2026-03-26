@@ -84,6 +84,7 @@ function RecentPetRow({ pet }) {
 function DoctorReportsDrawer({ doctorName }) {
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showAll, setShowAll] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -97,16 +98,30 @@ function DoctorReportsDrawer({ doctorName }) {
     })();
   }, [doctorName]);
 
+  const visibleReports = showAll ? reports : reports.slice(0, 6);
+
   return (
     <div style={{ padding: '16px 20px', backgroundColor: '#fdfaff', borderRadius: '14px', marginTop: '10px', border: '1px solid #ede9fe' }}>
-      <div style={{ fontSize: '13px', fontWeight: '700', color: '#a2a2df', marginBottom: '12px' }}>
-        📋 Бичсэн тэмдэглэлүүд ({reports.length})
+      <div style={{ fontSize: '13px', fontWeight: '700', color: '#a2a2df', marginBottom: '12px', display: 'flex', justifyContent: 'space-between' }}>
+        <span>📋 Бичсэн тэмдэглэлүүд ({reports.length})</span>
+        {reports.length > 6 && (
+          <button 
+            onClick={() => setShowAll(!showAll)}
+            style={{ 
+              background: 'none', border: 'none', color: '#a2a2df', 
+              fontSize: '11px', fontWeight: '800', cursor: 'pointer',
+              textDecoration: 'underline'
+            }}
+          >
+            {showAll ? 'Бага харах' : 'Бүгдийг харах'}
+          </button>
+        )}
       </div>
       {loading ? <div style={{ color: '#bbb', fontSize: '12px' }}>⏳ Уншиж байна...</div>
         : reports.length === 0 ? <div style={{ color: '#bbb', fontStyle: 'italic', fontSize: '12px' }}>Бичсэн тайлан олдсонгүй.</div>
           : (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '10px' }}>
-              {reports.map(r => (
+              {visibleReports.map(r => (
                 <div key={r._id} style={{ backgroundColor: 'white', border: '1px solid #f0effa', borderRadius: '10px', padding: '12px', fontSize: '12px' }}>
                   <div style={{ fontWeight: '800', color: '#1a1a2e', marginBottom: '4px' }}>🐾 {r.petName}</div>
                   <div style={{ color: '#666' }}>{r.diagnosis}</div>
@@ -163,6 +178,8 @@ function AdminDashboard() {
   const [doctorEmail, setDoctorEmail] = useState("");
   const [doctorPhone, setDoctorPhone] = useState("");
   const [doctorPassword, setDoctorPassword] = useState("");
+  const [appointments, setAppointments] = useState([]);
+  const [loadingAppointments, setLoadingAppointments] = useState(false);
 
   const fetchStats = async () => {
     setLoadingStats(true);
@@ -214,6 +231,33 @@ function AdminDashboard() {
     }
   };
 
+  const fetchAppointments = async () => {
+    setLoadingAppointments(true);
+    try {
+      const res = await fetch(`${API_URL}/appointments`);
+      const data = await res.json();
+      if (data.success) setAppointments(data.data);
+    } catch (err) {
+      console.error("Захиалгууд татахад алдаа:", err);
+    } finally {
+      setLoadingAppointments(false);
+    }
+  };
+
+  const handleDeleteAppointment = async (id) => {
+    if (!window.confirm("Энэ захиалгыг устгахдаа итгэлтэй байна уу?")) return;
+    try {
+      const res = await fetch(`${API_URL}/appointments/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        alert("Амжилттай устгагдлаа");
+        fetchAppointments();
+        fetchStats();
+      }
+    } catch (err) {
+      alert("Алдаа: " + err.message);
+    }
+  };
+
   useEffect(() => {
     const loggedUser = localStorage.getItem("user");
     if (loggedUser) {
@@ -227,6 +271,7 @@ function AdminDashboard() {
         fetchRecentPets();
         fetchDoctors();
         fetchPassportRequests();
+        fetchAppointments();
       }
     } else {
       navigate("/login");
@@ -394,6 +439,71 @@ function AdminDashboard() {
             {passportRequests.map(req => (
               <PassportRequestRow key={req._id} request={req} onEvaluate={handleEvaluatePassport} />
             ))}
+          </div>
+        )}
+      </div>
+
+      {/* Appointments Management */}
+      <div style={{
+        width: '100%',
+        backgroundColor: 'white', borderRadius: '20px', padding: '26px',
+        boxShadow: '0 6px 24px rgba(0,0,0,0.07)', border: '1px solid #f0f0f0',
+        marginBottom: '36px'
+      }}>
+        <h3 style={{ color: '#444', marginTop: 0, marginBottom: '20px', fontSize: '20px', fontWeight: '800' }}>
+          🗓️ Бүх цаг захиалгууд ({appointments.length})
+        </h3>
+        {loadingAppointments ? <LoadingSpinner text="Ачааллаж байна..." /> : appointments.length === 0 ? (
+          <div style={{ color: '#bbb', textAlign: 'center', padding: '30px 0' }}>Захиалга олдсонгүй</div>
+        ) : (
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
+              <thead>
+                <tr style={{ textAlign: 'left', borderBottom: '2px solid #f0f0f0', color: '#888' }}>
+                  <th style={{ padding: '12px' }}>Амьтан</th>
+                  <th style={{ padding: '12px' }}>Үйлчилгээ</th>
+                  <th style={{ padding: '12px' }}>Огноо</th>
+                  <th style={{ padding: '12px' }}>Эзэмшигч</th>
+                  <th style={{ padding: '12px' }}>Эмч</th>
+                  <th style={{ padding: '12px' }}>Төлөв</th>
+                  <th style={{ padding: '12px' }}>Үйлдэл</th>
+                </tr>
+              </thead>
+              <tbody>
+                {appointments.map(appt => (
+                  <tr key={appt._id} style={{ borderBottom: '1px solid #f9f9f9' }}>
+                    <td style={{ padding: '12px', fontWeight: 'bold' }}>{appt.petName}</td>
+                    <td style={{ padding: '12px' }}>
+                      {appt.serviceType === 'Bathing' ? '🛁 Усанд оруулах' :
+                       appt.serviceType === 'Grooming' ? '✂️ Үс засах' :
+                       appt.serviceType === 'NailClipping' ? '💅 Хумс авах' : '🩺 Үзлэг'}
+                    </td>
+                    <td style={{ padding: '12px' }}>{new Date(appt.date).toLocaleString('mn-MN')}</td>
+                    <td style={{ padding: '12px' }}>{appt.ownerId?.firstname} {appt.ownerId?.lastname}</td>
+                    <td style={{ padding: '12px' }}>{appt.doctorId ? `${appt.doctorId.firstname} ${appt.doctorId.lastname}` : '—'}</td>
+                    <td style={{ padding: '12px' }}>
+                      <span style={{
+                        padding: '3px 8px', borderRadius: '12px', fontSize: '12px',
+                        backgroundColor: appt.status === 'Completed' ? '#e8f8f2' : '#fff8e6',
+                        color: appt.status === 'Completed' ? '#27ae60' : '#f39c12',
+                        fontWeight: 'bold'
+                      }}>
+                        {appt.status === 'Completed' ? 'Дууссан' : 'Хүлээгдэж байна'}
+                      </span>
+                    </td>
+                    <td style={{ padding: '12px' }}>
+                      <button
+                        onClick={() => handleDeleteAppointment(appt._id)}
+                        style={{ backgroundColor: 'transparent', border: 'none', color: '#e74c3c', cursor: 'pointer', fontSize: '16px' }}
+                        title="Устгах"
+                      >
+                        🗑️
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </div>

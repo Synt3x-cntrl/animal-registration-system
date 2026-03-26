@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import API_URL from '../apiConfig';
 
-const AppointmentForm = ({ ownerId, onAppointmentAdded }) => {
+const AppointmentForm = ({ ownerId, onAppointmentAdded, defaultPetName }) => {
     const [doctors, setDoctors] = useState([]);
     const [selectedDoctorId, setSelectedDoctorId] = useState('');
     const [allSchedules, setAllSchedules] = useState([]);      // Эмчийн бүх сул цагууд
@@ -11,9 +11,13 @@ const AppointmentForm = ({ ownerId, onAppointmentAdded }) => {
     const [pets, setPets] = useState([]);
 
     const [formData, setFormData] = useState({
-        petName: '',
+        petName: defaultPetName || '',
+        petId: '', // Added petId
+        serviceType: 'Examination', // 'Examination', 'Bathing', 'Grooming'
         selectedDate: '',
         scheduleId: '',
+        manualDate: '',
+        manualTime: '',
         reason: ''
     });
     const [loading, setLoading] = useState(false);
@@ -75,6 +79,13 @@ const AppointmentForm = ({ ownerId, onAppointmentAdded }) => {
             const data = await response.json();
             if (response.ok && data.data) {
                 setPets(data.data);
+                // If defaultPetName is provided, find its ID
+                if (defaultPetName) {
+                    const found = data.data.find(p => p.name === defaultPetName);
+                    if (found) {
+                        setFormData(prev => ({ ...prev, petId: found._id }));
+                    }
+                }
             }
         } catch (error) {
             console.error("Амьтдын жагсаалт татахад алдаа:", error);
@@ -115,8 +126,14 @@ const AppointmentForm = ({ ownerId, onAppointmentAdded }) => {
         setLoading(true);
         setError(null);
 
-        if (!selectedDoctorId || !formData.scheduleId) {
+        if (formData.serviceType === 'Examination' && (!selectedDoctorId || !formData.scheduleId)) {
             setError("Эмч болон Цагаа сонгоно уу.");
+            setLoading(false);
+            return;
+        }
+
+        if (formData.serviceType !== 'Examination' && (!formData.manualDate || !formData.manualTime)) {
+            setError("Өдөр болон Цагаа сонгоно уу.");
             setLoading(false);
             return;
         }
@@ -135,10 +152,13 @@ const AppointmentForm = ({ ownerId, onAppointmentAdded }) => {
                 },
                 body: JSON.stringify({
                     petName: formData.petName,
+                    petId: formData.petId,
                     reason: formData.reason,
+                    serviceType: formData.serviceType,
                     ownerId,
-                    doctorId: selectedDoctorId,
-                    scheduleId: formData.scheduleId
+                    doctorId: formData.serviceType === 'Examination' ? selectedDoctorId : null,
+                    scheduleId: formData.serviceType === 'Examination' ? formData.scheduleId : null,
+                    date: formData.serviceType === 'Examination' ? undefined : `${formData.manualDate}T${formData.manualTime}`
                 }),
             });
 
@@ -146,7 +166,15 @@ const AppointmentForm = ({ ownerId, onAppointmentAdded }) => {
 
             if (response.ok) {
                 alert("Цаг амжилттай захиалагдлаа!");
-                setFormData({ petName: '', selectedDate: '', scheduleId: '', reason: '' });
+                setFormData({ 
+                    petName: '', 
+                    serviceType: 'Examination',
+                    selectedDate: '', 
+                    scheduleId: '', 
+                    manualDate: '',
+                    manualTime: '',
+                    reason: '' 
+                });
                 setSelectedDoctorId('');
                 if (onAppointmentAdded) onAppointmentAdded(data.data);
             } else {
@@ -185,108 +213,166 @@ const AppointmentForm = ({ ownerId, onAppointmentAdded }) => {
             marginBottom: '20px'
         }}>
             <h3 style={{ color: '#2c3e50', borderBottom: '2px solid #e74c3c', paddingBottom: '10px', marginBottom: '15px' }}>
-                📅 Эмчид цаг захиалах
+                📅 Цаг захиалах
             </h3>
             {error && <div style={{ color: 'red', marginBottom: '10px', padding: '8px', backgroundColor: '#fff5f5', borderRadius: '5px', border: '1px solid #ffcccc' }}>{error}</div>}
 
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-
-                {/* 1. Эмч сонгох */}
+                
+                {/* 0. Үйлчилгээ сонгох */}
                 <div>
-                    <label style={labelStyle}>🩺 Эмч сонгох:</label>
+                    <label style={labelStyle}>⚙️ Үйлчилгээний төрөл:</label>
                     <select
-                        value={selectedDoctorId}
-                        onChange={(e) => setSelectedDoctorId(e.target.value)}
+                        name="serviceType"
+                        value={formData.serviceType}
+                        onChange={handleChange}
                         required
                         style={inputStyle}
                     >
-                        <option value="">-- Эмч сонгох --</option>
-                        {doctors.map(doc => (
-                            <option key={doc._id} value={doc._id}>
-                                {doc.firstname} {doc.lastname} (Эмч)
+                        <option value="Examination">🩺 Эмчийн үзлэг</option>
+                        <option value="Bathing">🛁 Усанд оруулах</option>
+                        <option value="Grooming">✂️ Үс засах / Гоо сайхан</option>
+                        <option value="NailClipping">🐾 Хумс авах</option>
+                    </select>
+                </div>
+
+                {/* 1. Эмч сонгох - Зөвхөн үзлэг бол */}
+                {formData.serviceType === 'Examination' && (
+                    <div>
+                        <label style={labelStyle}>🩺 Эмч сонгох:</label>
+                        <select
+                            value={selectedDoctorId}
+                            onChange={(e) => setSelectedDoctorId(e.target.value)}
+                            required
+                            style={inputStyle}
+                        >
+                            <option value="">-- Эмч сонгох --</option>
+                            {doctors.map(doc => (
+                                <option key={doc._id} value={doc._id}>
+                                    {doc.firstname} {doc.lastname} (Эмч)
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+                )}
+
+                {/* 2. Өдөр сонгох */}
+                {formData.serviceType === 'Examination' ? (
+                    <div>
+                        <label style={labelStyle}>📆 Өдөр сонгох:</label>
+                        <select
+                            name="selectedDate"
+                            value={formData.selectedDate}
+                            onChange={handleChange}
+                            required
+                            disabled={!selectedDoctorId || availableDates.length === 0}
+                            style={inputStyle}
+                        >
+                            <option value="">
+                                {!selectedDoctorId
+                                    ? "-- Эхлээд эмч сонгоно уу --"
+                                    : availableDates.length === 0
+                                        ? "Боломжтой өдөр байхгүй"
+                                        : "-- Өдөр сонгох --"
+                                }
                             </option>
-                        ))}
-                    </select>
-                </div>
+                            {availableDates.map(dateStr => {
+                                const d = new Date(dateStr + 'T00:00:00');
+                                return (
+                                    <option key={dateStr} value={dateStr}>
+                                        {d.toLocaleDateString('mn-MN', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' })}
+                                    </option>
+                                );
+                            })}
+                        </select>
+                    </div>
+                ) : (
+                    <div>
+                        <label style={labelStyle}>📆 Өдөр сонгох:</label>
+                        <input
+                            type="date"
+                            name="manualDate"
+                            value={formData.manualDate}
+                            onChange={handleChange}
+                            required
+                            style={inputStyle}
+                            min={new Date().toISOString().split('T')[0]}
+                        />
+                    </div>
+                )}
 
-                {/* 2. Өдөр сонгох — зөвхөн эмч захиалга байгаа өдрүүд */}
-                <div>
-                    <label style={labelStyle}>📆 Өдөр сонгох:</label>
-                    <select
-                        name="selectedDate"
-                        value={formData.selectedDate}
-                        onChange={handleChange}
-                        required
-                        disabled={!selectedDoctorId || availableDates.length === 0}
-                        style={inputStyle}
-                    >
-                        <option value="">
-                            {!selectedDoctorId
-                                ? "-- Эхлээд эмч сонгоно уу --"
-                                : availableDates.length === 0
-                                    ? "Боломжтой өдөр байхгүй"
-                                    : "-- Өдөр сонгох --"
-                            }
-                        </option>
-                        {availableDates.map(dateStr => {
-                            const d = new Date(dateStr + 'T00:00:00');
-                            return (
-                                <option key={dateStr} value={dateStr}>
-                                    {d.toLocaleDateString('mn-MN', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' })}
-                                </option>
-                            );
-                        })}
-                    </select>
-                </div>
-
-                {/* 3. Цаг сонгох — сонгосон өдрийн боломжтой цагууд */}
-                <div>
-                    <label style={labelStyle}>🕐 Цаг сонгох:</label>
-                    <select
-                        name="scheduleId"
-                        value={formData.scheduleId}
-                        onChange={handleChange}
-                        required
-                        disabled={!formData.selectedDate || filteredSchedules.length === 0}
-                        style={inputStyle}
-                    >
-                        <option value="">
-                            {!formData.selectedDate
-                                ? "-- Эхлээд өдөр сонгоно уу --"
-                                : filteredSchedules.length === 0
-                                    ? "Тэр өдөр сул цаг байхгүй"
-                                    : "-- Цаг сонгох --"
-                            }
-                        </option>
-                        {filteredSchedules.map(sch => {
-                            const d = new Date(sch.date);
-                            return (
-                                <option key={sch._id} value={sch._id}>
-                                    {d.toLocaleTimeString('mn-MN', { hour: '2-digit', minute: '2-digit' })}
-                                </option>
-                            );
-                        })}
-                    </select>
-                </div>
+                {/* 3. Цаг сонгох */}
+                {formData.serviceType === 'Examination' ? (
+                    <div>
+                        <label style={labelStyle}>🕐 Цаг сонгох:</label>
+                        <select
+                            name="scheduleId"
+                            value={formData.scheduleId}
+                            onChange={handleChange}
+                            required
+                            disabled={!formData.selectedDate || filteredSchedules.length === 0}
+                            style={inputStyle}
+                        >
+                            <option value="">
+                                {!formData.selectedDate
+                                    ? "-- Эхлээд өдөр сонгоно уу --"
+                                    : filteredSchedules.length === 0
+                                        ? "Тэр өдөр сул цаг байхгүй"
+                                        : "-- Цаг сонгох --"
+                                }
+                            </option>
+                            {filteredSchedules.map(sch => {
+                                const d = new Date(sch.date);
+                                return (
+                                    <option key={sch._id} value={sch._id}>
+                                        {d.toLocaleTimeString('mn-MN', { hour: '2-digit', minute: '2-digit' })}
+                                    </option>
+                                );
+                            })}
+                        </select>
+                    </div>
+                ) : (
+                    <div>
+                        <label style={labelStyle}>🕐 Цаг сонгох:</label>
+                        <input
+                            type="time"
+                            name="manualTime"
+                            value={formData.manualTime}
+                            onChange={handleChange}
+                            required
+                            style={inputStyle}
+                        />
+                    </div>
+                )}
 
                 {/* 4. Амьтны нэр — dropdown */}
                 <div>
-                    <label style={labelStyle}>🐾 Амьтны нэр сонгох:</label>
-                    <select
-                        name="petName"
-                        value={formData.petName}
-                        onChange={handleChange}
-                        required
-                        style={inputStyle}
-                    >
-                        <option value="">-- Амьтан сонгох --</option>
-                        {pets.map(pet => (
-                            <option key={pet._id} value={pet.name}>
-                                {pet.name} ({pet.species})
-                            </option>
-                        ))}
-                    </select>
-                    {pets.length === 0 && (
+                    <label style={labelStyle}>🐾 Амьтан:</label>
+                    {defaultPetName ? (
+                        <div style={{ ...inputStyle, backgroundColor: '#f9f9f9', fontWeight: 'bold' }}>
+                            {defaultPetName}
+                        </div>
+                    ) : (
+                        <select
+                            name="petId"
+                            value={formData.petId}
+                            onChange={(e) => {
+                                const id = e.target.value;
+                                const pet = pets.find(p => p._id === id);
+                                setFormData(prev => ({ ...prev, petId: id, petName: pet ? pet.name : '' }));
+                            }}
+                            required
+                            style={inputStyle}
+                        >
+                            <option value="">-- Амьтан сонгох --</option>
+                            {pets.map(pet => (
+                                <option key={pet._id} value={pet._id}>
+                                    {pet.name} ({pet.species})
+                                </option>
+                            ))}
+                        </select>
+                    )}
+                    {!defaultPetName && pets.length === 0 && (
                         <p style={{ color: '#e67e22', fontSize: '13px', marginTop: '5px', margin: '5px 0 0 0' }}>
                             ⚠️ Та амьтан бүртгэлгүй байна. Эхлээд "Миний амьтад" хэсэгт амьтан нэмнэ үү.
                         </p>
@@ -308,15 +394,15 @@ const AppointmentForm = ({ ownerId, onAppointmentAdded }) => {
 
                 <button
                     type="submit"
-                    disabled={loading || !selectedDoctorId || !formData.scheduleId || !formData.petName}
+                    disabled={loading || !formData.petName || (formData.serviceType === 'Examination' ? (!selectedDoctorId || !formData.scheduleId) : (!formData.manualDate || !formData.manualTime))}
                     style={{
                         padding: '12px',
-                        backgroundColor: (loading || !selectedDoctorId || !formData.scheduleId || !formData.petName) ? '#ccc' : '#e74c3c',
+                        backgroundColor: (loading || !formData.petName || (formData.serviceType === 'Examination' ? (!selectedDoctorId || !formData.scheduleId) : (!formData.manualDate || !formData.manualTime))) ? '#ccc' : '#e74c3c',
                         color: 'white',
                         border: 'none',
                         borderRadius: '5px',
                         fontWeight: 'bold',
-                        cursor: (loading || !selectedDoctorId || !formData.scheduleId || !formData.petName) ? 'not-allowed' : 'pointer',
+                        cursor: (loading || !formData.petName || (formData.serviceType === 'Examination' ? (!selectedDoctorId || !formData.scheduleId) : (!formData.manualDate || !formData.manualTime))) ? 'not-allowed' : 'pointer',
                         fontSize: '15px'
                     }}
                 >

@@ -9,9 +9,22 @@ const MedicalForm = ({ onSuccess, prefillData, doctorName, doctorId }) => {
         date: new Date().toISOString().split('T')[0],
         symptoms: '',
         diagnosis: '',
-        treatment: '',
+    treatment: '',
+        treatments: [], // Сонгосон үйлчилгээнүүд
         notes: ''
     });
+
+    const treatmentCategories = {
+        "Ерөнхий": [
+            "бүртгэл", "пасспорт", "үзлэг", "туулга", "галзуу", 
+            "үндсэн", "анус", "хумс dog", "шарлага", "чип", "хумс"
+        ],
+        "Эмчилгээ": [
+            "чих", "чих/д ус", "хэвтэн", "шарх", "тайвшарх", 
+            "наркоз", "cylan 250", "cylan 50", "Bim80", "klizm", 
+            "vincrist", "мөөг тос"
+        ]
+    };
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
@@ -45,6 +58,17 @@ const MedicalForm = ({ onSuccess, prefillData, doctorName, doctorId }) => {
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleTreatmentChange = (item) => {
+        setFormData(prev => {
+            const currentTreatments = prev.treatments || [];
+            if (currentTreatments.includes(item)) {
+                return { ...prev, treatments: currentTreatments.filter(t => t !== item) };
+            } else {
+                return { ...prev, treatments: [...currentTreatments, item] };
+            }
+        });
     };
 
     const handleSubmit = async (e) => {
@@ -82,7 +106,7 @@ const MedicalForm = ({ onSuccess, prefillData, doctorName, doctorId }) => {
 
             // 2. Захиалгыг устгах (хэрэв prefillData._ ID байвал)
             if (prefillData?._id) {
-                await fetch(`${API_URL}/appointments/${prefillData._id}`, {
+                await fetch(`${API_URL}/appointments/${prefillData._id}?received=true`, {
                     method: "DELETE",
                 });
             }
@@ -116,6 +140,7 @@ const MedicalForm = ({ onSuccess, prefillData, doctorName, doctorId }) => {
                 symptoms: '',
                 diagnosis: '',
                 treatment: '',
+                treatments: [],
                 notes: ''
             });
             setWantFollowUp(false);
@@ -207,39 +232,87 @@ const MedicalForm = ({ onSuccess, prefillData, doctorName, doctorId }) => {
                     />
                 </div>
 
-                <div>
-                    <label style={labelStyle}>Шинж тэмдэг:</label>
-                    <textarea
-                        name="symptoms"
-                        value={formData.symptoms}
-                        onChange={handleChange}
-                        style={{ ...inputStyle, minHeight: '80px' }}
-                        placeholder="Өвчний шинж тэмдгүүдийг бичнэ үү..."
-                        required
-                    />
+                <div style={{ display: 'flex', gap: '25px', flexWrap: 'wrap' }}>
+                    {/* Left Column: Treatment Selection */}
+                    <div style={{ flex: '1.2', minWidth: '300px' }}>
+                        <div style={{
+                            padding: '20px',
+                            backgroundColor: '#f8f9fa',
+                            borderRadius: '12px',
+                            border: '1px solid #e9ecef',
+                            height: '100%',
+                            boxSizing: 'border-box'
+                        }}>
+                            <label style={{ ...labelStyle, color: '#2c3e50', marginBottom: '15px' }}>🛠 Хийгдсэн үйлчилгээ / эмчилгээ сонгох:</label>
+                            
+                            {Object.entries(treatmentCategories).map(([category, items]) => (
+                                <div key={category} style={{ marginBottom: '18px' }}>
+                                    <div style={{ fontWeight: 'bold', color: '#3498db', marginBottom: '10px', fontSize: '15px', borderBottom: '1px solid #dee2e6', paddingBottom: '3px' }}>
+                                        {category}
+                                    </div>
+                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '8px' }}>
+                                        {items.map(item => (
+                                            <label key={item} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px', color: '#444' }}>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={formData.treatments.includes(item)}
+                                                    onChange={() => handleTreatmentChange(item)}
+                                                    style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+                                                />
+                                                {item}
+                                            </label>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Right Column: Textareas */}
+                    <div style={{ flex: '1', minWidth: '300px', display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                        <div>
+                            <label style={labelStyle}>Шинж тэмдэг:</label>
+                            <textarea
+                                name="symptoms"
+                                value={formData.symptoms}
+                                onChange={handleChange}
+                                style={{ ...inputStyle, minHeight: '70px' }}
+                                placeholder="Шинж тэмдэг... (Сонголттой)"
+                            />
+                        </div>
+
+                        <div>
+                            <label style={labelStyle}>Онош:</label>
+                            <textarea
+                                name="diagnosis"
+                                value={formData.diagnosis}
+                                onChange={handleChange}
+                                style={{ ...inputStyle, minHeight: '70px' }}
+                                placeholder="Онош... (Сонголттой)"
+                            />
+                        </div>
+
+                        <div>
+                            <label style={labelStyle}>Эмчилгээ ба Зөвлөмж:</label>
+                            <textarea
+                                name="treatment"
+                                value={formData.treatment}
+                                onChange={handleChange}
+                                style={{ ...inputStyle, minHeight: '130px' }}
+                                placeholder="Эмчилгээ, зөвлөгөө... (Сонголттой)"
+                            />
+                        </div>
+                    </div>
                 </div>
 
                 <div>
-                    <label style={labelStyle}>Онош:</label>
+                    <label style={labelStyle}>Тэмдэглэл (Дотоод хэрэгцээнд):</label>
                     <textarea
-                        name="diagnosis"
-                        value={formData.diagnosis}
+                        name="notes"
+                        value={formData.notes}
                         onChange={handleChange}
-                        style={{ ...inputStyle, minHeight: '80px' }}
-                        placeholder="Эмчийн онош..."
-                        required
-                    />
-                </div>
-
-                <div>
-                    <label style={labelStyle}>Эмчилгээ ба Зөвлөмж:</label>
-                    <textarea
-                        name="treatment"
-                        value={formData.treatment}
-                        onChange={handleChange}
-                        style={{ ...inputStyle, minHeight: '100px' }}
-                        placeholder="Хийх эмчилгээ, уух эм, зөвлөгөө..."
-                        required
+                        style={{ ...inputStyle, minHeight: '60px' }}
+                        placeholder="Нэмэлт тэмдэглэл бичих..."
                     />
                 </div>
 

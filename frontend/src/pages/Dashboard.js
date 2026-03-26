@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import MedicalForm from "../components/MedicalForm";
+import MedicalRecordsList from "../components/MedicalRecordsList";
 import DoctorAppointmentsList from "../components/DoctorAppointmentsList";
 import DoctorDailySummariesList from "../components/DoctorDailySummariesList";
 import DoctorFastSearch from "../components/DoctorFastSearch";
@@ -149,6 +150,14 @@ function Dashboard() {
                       <div style={{ fontSize: '36px', fontWeight: 'bold', color: '#28a745' }}>{stats.todayAppointments || 0}</div>
                       <div style={{ color: '#7f8c8d', fontSize: '15px', fontWeight: 'bold', marginTop: '5px' }}>Өнөөдрийн захиалга 📅</div>
                     </div>
+                    <div style={{ padding: '20px', backgroundColor: '#e8f4f8', borderRadius: '12px', textAlign: 'center', boxShadow: "0 4px 6px rgba(0,0,0,0.05)" }}>
+                      <div style={{ fontSize: '36px', fontWeight: 'bold', color: '#3498db' }}>{stats.last7DaysSeen || 0}</div>
+                      <div style={{ color: '#7f8c8d', fontSize: '15px', fontWeight: 'bold', marginTop: '5px' }}>Сүүлийн 7 хоног 🗓️</div>
+                    </div>
+                    <div style={{ padding: '20px', backgroundColor: '#fff3cd', borderRadius: '12px', textAlign: 'center', boxShadow: "0 4px 6px rgba(0,0,0,0.05)" }}>
+                      <div style={{ fontSize: '36px', fontWeight: 'bold', color: '#f39c12' }}>{stats.last30DaysSeen || 0}</div>
+                      <div style={{ color: '#7f8c8d', fontSize: '15px', fontWeight: 'bold', marginTop: '5px' }}>Сүүлийн 30 хоног 📊</div>
+                    </div>
                     <div style={{ padding: '20px', backgroundColor: '#f8d7da', borderRadius: '12px', textAlign: 'center', boxShadow: "0 4px 6px rgba(0,0,0,0.05)" }}>
                       <div style={{ fontSize: '36px', fontWeight: 'bold', color: '#dc3545' }}>{stats.totalPatientsSeen || 0}</div>
                       <div style={{ color: '#7f8c8d', fontSize: '15px', fontWeight: 'bold', marginTop: '5px' }}>Нийт үзсэн амьтад 🩺</div>
@@ -167,7 +176,7 @@ function Dashboard() {
               alignItems: "flex-start",
             }}
           >
-            {/* АДМИН ХЭСЭГ - Ширтээгүй (AdminDashboard-руу Sidebar-аар дамжиж очно) */}
+            {/* АДМИН ХЭСЭГ */}
             {user.role === "admin" && (
               <div style={{ width: '100%', padding: '20px', textAlign: 'center', color: '#888' }}>
                 <p>Админ тавтай морилно уу. Статистик харахын тулд Хяналтын самбар руу орно уу.</p>
@@ -203,7 +212,24 @@ function Dashboard() {
                     key={refreshKey}
                     doctorId={user._id}
                     onAppointmentClick={setSelectedAppointment}
+                    onSuccess={() => {
+                        setSelectedAppointment(null);
+                        fetchDashboardStats(user);
+                    }}
                   />
+
+                  {selectedAppointment && (
+                    <div style={{ marginTop: "30px" }}>
+                      <h3 style={{ borderBottom: "2px solid #3498db", paddingBottom: "10px", color: "#2c3e50" }}>
+                        📜 {selectedAppointment.petName} - Өмнөх түүх
+                      </h3>
+                      <MedicalRecordsList 
+                        userId={selectedAppointment.ownerId?._id || selectedAppointment.ownerId} 
+                        petName={selectedAppointment.petName}
+                        limit={2}
+                      />
+                    </div>
+                  )}
                 </div>
                 {/* Баруун: Эмнэлгийн үзлэг бүртгэх */}
                 <div className="responsive-width" style={{ flex: "1 1 40%", minWidth: "300px" }}>
@@ -238,14 +264,11 @@ function Dashboard() {
                       onSuccess={() => {
                         setSelectedAppointment(null);
                         setRefreshKey((k) => k + 1);
+                        fetchDashboardStats(user);
                       }}
                     />
                   </div>
-                </div>
 
-                {/* Доороо: Өдрийн тайлангууд */}
-                <div style={{ flex: "1 1 100%", width: "100%", marginTop: "20px" }}>
-                  <DoctorDailySummariesList doctorId={user._id} doctorName={`${user.firstname} ${user.lastname}`} />
                 </div>
 
                 {/* Баруун Доороо: Пасспорт хүсэлтүүд (Доктор) */}

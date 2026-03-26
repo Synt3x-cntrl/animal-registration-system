@@ -117,8 +117,28 @@ const PetMedicalTimeline = ({ pet, onClose }) => {
                                                 <strong>Шинж тэмдэг:</strong> {record.symptoms}
                                             </div>
                                             <div style={{ marginBottom: '10px', fontSize: '15px' }}>
-                                                <strong>Эмчилгээ:</strong> <span style={{ color: '#27ae60' }}>{record.treatment}</span>
+                                                <strong>Эмчилгээ:</strong> <span style={{ color: '#27ae60', fontWeight: 'bold' }}>{record.treatment}</span>
                                             </div>
+
+                                            {record.treatments && record.treatments.length > 0 && (
+                                                <div style={{ marginBottom: '12px' }}>
+                                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                                                        {record.treatments.map((t, idx) => (
+                                                            <span key={idx} style={{
+                                                                backgroundColor: '#e1f5fe',
+                                                                color: '#0288d1',
+                                                                padding: '3px 10px',
+                                                                borderRadius: '15px',
+                                                                fontSize: '11px',
+                                                                fontWeight: 'bold',
+                                                                border: '1px solid #b3e5fc'
+                                                            }}>
+                                                                {t}
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
                                             <div style={{ fontSize: '13px', color: '#7f8c8d', borderTop: '1px solid #eee', paddingTop: '8px', fontStyle: 'italic' }}>
                                                 👨‍⚕️ Үзсэн эмч: {record.doctorName}
                                             </div>

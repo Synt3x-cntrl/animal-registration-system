@@ -3,6 +3,7 @@ import LoadingSpinner from "../components/LoadingSpinner";
 import PetCard from "../components/PetCard";
 import PetForm from "../components/PetForm";
 import PassportCard from "../components/PassportCard";
+import AppointmentForm from "../components/AppointmentForm";
 import API_URL from "../apiConfig";
 
 function MyPets() {
@@ -148,86 +149,127 @@ function MyPets() {
                     ⬅ Буцах
                 </button>
                 
-                <div style={{ backgroundColor: 'white', padding: '35px', borderRadius: '32px', boxShadow: '0 12px 40px rgba(0,0,0,0.08)', display: 'flex', gap: '40px', flexWrap: 'wrap', marginBottom: '40px', border: '1px solid #f0f0f0' }}>
-                    <div style={{ flex: '1 1 300px', maxWidth: '400px', height: '300px', borderRadius: '24px', overflow: 'hidden', boxShadow: '0 8px 20px rgba(0,0,0,0.1)' }}>
-                        <img src={selectedPet.imageUrl || "https://images.unsplash.com/photo-1543466835-00a7907e9de1?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1074&q=80"} alt={selectedPet.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                    </div>
-                    <div style={{ flex: '2 1 400px' }}>
-                        <h2 style={{ color: '#2c3e50', marginTop: 0, borderBottom: '3px solid #f39c12', paddingBottom: '15px', fontSize: '32px', fontWeight: '800' }}>🐾 {selectedPet.name}</h2>
-                        
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '25px', marginTop: '25px', fontSize: '17px' }}>
-                            <div><span style={{ color: '#7f8c8d' }}>Төрөл:</span> <strong style={{ color: '#2c3e50' }}>{selectedPet.species}</strong></div>
-                            <div><span style={{ color: '#7f8c8d' }}>Нас:</span> <strong style={{ color: '#2c3e50' }}>{selectedPet.age}</strong></div>
-                            <div><span style={{ color: '#7f8c8d' }}>Хүйс:</span> <strong style={{ color: '#2c3e50' }}>{selectedPet.gender}</strong></div>
-                            <div style={{ color: '#27ae60' }}>🏥 <span style={{ color: '#7f8c8d' }}>Үзүүлсэн тоо:</span> <strong>{petRecords.length} удаа</strong></div>
-                            
-                            {/* New Fields */}
-                            <div><span style={{ color: '#7f8c8d' }}>Үүлдэр:</span> <strong style={{ color: '#2c3e50' }}>{selectedPet.breed || 'Мэдэгдэхгүй'}</strong></div>
-                            <div><span style={{ color: '#7f8c8d' }}>Өнгө:</span> <strong style={{ color: '#2c3e50' }}>{selectedPet.color || 'Мэдэгдэхгүй'}</strong></div>
-                            <div><span style={{ color: '#7f8c8d' }}>Жин:</span> <strong style={{ color: '#2c3e50' }}>{selectedPet.weight ? `${selectedPet.weight} кг` : 'Мэдэгдэхгүй'}</strong></div>
-
-                            {/* Passport UI */}
-                            <div style={{ gridColumn: 'span 2', marginTop: '5px', padding: '20px', backgroundColor: '#f8f9fa', borderRadius: '16px', border: '1px solid #e9ecef' }}>
-                                <h4 style={{ margin: '0 0 15px 0', color: '#2c3e50', fontSize: '18px' }}>🛂 Амьтны Пасспорт</h4>
-                                {(!selectedPet.passportStatus || selectedPet.passportStatus === 'none' || selectedPet.passportStatus === 'rejected') && (
-                                    <div>
-                                        {selectedPet.passportStatus === 'rejected' && <p style={{ color: '#e74c3c', marginTop: 0, marginBottom: '10px', fontSize: '14px' }}>Өмнөх хүсэлт цуцлагдсан байна.</p>}
-                                        <button 
-                                            onClick={() => handleRequestPassport(selectedPet._id)}
-                                            style={{ padding: '10px 20px', backgroundColor: '#3498db', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '15px', transition: '0.2s' }}
-                                            onMouseEnter={(e) => e.target.style.backgroundColor = '#2980b9'}
-                                            onMouseLeave={(e) => e.target.style.backgroundColor = '#3498db'}
-                                        >
-                                            Пасспорт хүсэх
-                                        </button>
-                                    </div>
-                                )}
-                                {selectedPet.passportStatus === 'requested' && (
-                                    <div style={{ color: '#f39c12', fontWeight: 'bold', fontSize: '15px', padding: '10px', backgroundColor: 'rgba(243, 156, 18, 0.1)', borderRadius: '8px' }}>
-                                        ⏳ Хүсэлт илгээгдсэн, эмч зөвшөөрөхийг хүлээж байна...
-                                    </div>
-                                )}
-                                {selectedPet.passportStatus === 'approved' && (
-                                    <div style={{ display: 'flex', justifyContent: 'center', marginTop: '10px' }}>
-                                        <PassportCard pet={selectedPet} />
-                                    </div>
-                                )}
+                <div style={{ display: 'flex', gap: '30px', flexWrap: 'wrap', alignItems: 'flex-start' }}>
+                    {/* Left Column: Pet Info & History */}
+                    <div style={{ flex: '2 1 600px' }}>
+                        <div style={{ backgroundColor: 'white', padding: '35px', borderRadius: '32px', boxShadow: '0 12px 40px rgba(0,0,0,0.08)', display: 'flex', gap: '40px', flexWrap: 'wrap', marginBottom: '40px', border: '1px solid #f0f0f0' }}>
+                            <div style={{ flex: '1 1 300px', maxWidth: '400px', height: '300px', borderRadius: '24px', overflow: 'hidden', boxShadow: '0 8px 20px rgba(0,0,0,0.1)' }}>
+                                <img src={selectedPet.imageUrl || "https://images.unsplash.com/photo-1543466835-00a7907e9de1?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1074&q=80"} alt={selectedPet.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                             </div>
+                            <div style={{ flex: '2 1 400px' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '3px solid #f39c12', paddingBottom: '15px' }}>
+                                    <h2 style={{ color: '#2c3e50', margin: 0, fontSize: '32px', fontWeight: '800' }}>🐾 {selectedPet.name}</h2>
+                                    <button 
+                                        onClick={() => document.getElementById('booking-section').scrollIntoView({ behavior: 'smooth' })}
+                                        style={{ padding: '10px 20px', backgroundColor: '#e74c3c', color: 'white', border: 'none', borderRadius: '12px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px', boxShadow: '0 4px 10px rgba(231, 76, 60, 0.3)' }}
+                                    >
+                                        📅 Цаг авах
+                                    </button>
+                                </div>
+                                
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '25px', marginTop: '25px', fontSize: '17px' }}>
+                                    <div><span style={{ color: '#7f8c8d' }}>Төрөл:</span> <strong style={{ color: '#2c3e50' }}>{selectedPet.species}</strong></div>
+                                    <div><span style={{ color: '#7f8c8d' }}>Нас:</span> <strong style={{ color: '#2c3e50' }}>{selectedPet.age}</strong></div>
+                                    <div><span style={{ color: '#7f8c8d' }}>Хүйс:</span> <strong style={{ color: '#2c3e50' }}>{selectedPet.gender}</strong></div>
+                                    <div style={{ color: '#27ae60' }}>🏥 <span style={{ color: '#7f8c8d' }}>Үзүүлсэн тоо:</span> <strong>{petRecords.length} удаа</strong></div>
+                                    <div><span style={{ color: '#7f8c8d' }}>Үүлдэр:</span> <strong style={{ color: '#2c3e50' }}>{selectedPet.breed || 'Мэдэгдэхгүй'}</strong></div>
+                                    <div><span style={{ color: '#7f8c8d' }}>Өнгө:</span> <strong style={{ color: '#2c3e50' }}>{selectedPet.color || 'Мэдэгдэхгүй'}</strong></div>
+                                    <div><span style={{ color: '#7f8c8d' }}>Жин:</span> <strong style={{ color: '#2c3e50' }}>{selectedPet.weight ? `${selectedPet.weight} кг` : 'Мэдэгдэхгүй'}</strong></div>
 
-                            {getNextAppointment(selectedPet.name) ? (
-                                <div style={{ color: '#e74c3c', gridColumn: 'span 2' }}>📅 <span style={{ color: '#7f8c8d' }}>Дараагийн үзлэг:</span> <strong>{new Date(getNextAppointment(selectedPet.name)).toLocaleDateString()} {new Date(getNextAppointment(selectedPet.name)).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</strong></div>
+                                    {/* Passport UI */}
+                                    <div style={{ gridColumn: 'span 2', marginTop: '5px', padding: '20px', backgroundColor: '#f8f9fa', borderRadius: '16px', border: '1px solid #e9ecef' }}>
+                                        <h4 style={{ margin: '0 0 15px 0', color: '#2c3e50', fontSize: '18px' }}>🛂 Амьтны Пасспорт</h4>
+                                        {(!selectedPet.passportStatus || selectedPet.passportStatus === 'none' || selectedPet.passportStatus === 'rejected') && (
+                                            <div>
+                                                {selectedPet.passportStatus === 'rejected' && <p style={{ color: '#e74c3c', marginTop: 0, marginBottom: '10px', fontSize: '14px' }}>Өмнөх хүсэлт цуцлагдсан байна.</p>}
+                                                <button 
+                                                    onClick={() => handleRequestPassport(selectedPet._id)}
+                                                    style={{ padding: '10px 20px', backgroundColor: '#3498db', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '15px', transition: '0.2s' }}
+                                                    onMouseEnter={(e) => e.target.style.backgroundColor = '#2980b9'}
+                                                    onMouseLeave={(e) => e.target.style.backgroundColor = '#3498db'}
+                                                >
+                                                    Пасспорт хүсэх
+                                                </button>
+                                            </div>
+                                        )}
+                                        {selectedPet.passportStatus === 'requested' && (
+                                            <div style={{ color: '#f39c12', fontWeight: 'bold', fontSize: '15px', padding: '10px', backgroundColor: 'rgba(243, 156, 18, 0.1)', borderRadius: '8px' }}>
+                                                ⏳ Хүсэлт илгээгдсэн, эмч зөвшөөрөхийг хүлээж байна...
+                                            </div>
+                                        )}
+                                        {selectedPet.passportStatus === 'approved' && (
+                                            <div style={{ display: 'flex', justifyContent: 'center', marginTop: '10px' }}>
+                                                <PassportCard pet={selectedPet} />
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {getNextAppointment(selectedPet.name) ? (
+                                        <div style={{ color: '#e74c3c', gridColumn: 'span 2' }}>📅 <span style={{ color: '#7f8c8d' }}>Дараагийн үзлэг:</span> <strong>{new Date(getNextAppointment(selectedPet.name)).toLocaleDateString()} {new Date(getNextAppointment(selectedPet.name)).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</strong></div>
+                                    ) : (
+                                        <div style={{ color: '#bdc3c7', gridColumn: 'span 2' }}>📅 <span style={{ color: '#7f8c8d' }}>Дараагийн үзлэг:</span> Цаг аваагүй</div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style={{ marginTop: '20px', backgroundColor: '#fff', padding: '35px', borderRadius: '32px', boxShadow: '0 8px 30px rgba(0,0,0,0.05)', border: '1px solid #f0f0f0' }}>
+                            <h3 style={{ borderBottom: '3px solid #27ae60', paddingBottom: '15px', color: '#2c3e50', marginBottom: '30px', fontSize: '24px', fontWeight: '700' }}>🩺 Эмнэлгийн түүх</h3>
+                            
+                            {petRecords.length === 0 ? (
+                                <div style={{ padding: '50px', backgroundColor: '#f9fafb', borderRadius: '20px', textAlign: 'center', color: '#94a3b8', border: '2px dashed #e2e8f0', fontSize: '18px' }}>
+                                    🏥 Одоогоор эмнэлгийн түүх байхгүй байна.
+                                </div>
                             ) : (
-                                <div style={{ color: '#bdc3c7', gridColumn: 'span 2' }}>📅 <span style={{ color: '#7f8c8d' }}>Дараагийн үзлэг:</span> Цаг аваагүй</div>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                                    {petRecords.map(record => (
+                                        <div key={record._id} style={{ padding: '25px', backgroundColor: 'white', borderRadius: '20px', borderLeft: '8px solid #27ae60', boxShadow: '0 4px 12px rgba(0,0,0,0.03)', borderTop: '1px solid #f8fafc', borderRight: '1px solid #f8fafc', borderBottom: '1px solid #f8fafc' }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px', flexWrap: 'wrap', gap: '10px' }}>
+                                                <strong style={{ fontSize: '20px', color: '#1e293b' }}>👨‍⚕️ Эмчийн тэмдэглэл</strong>
+                                                <span style={{ backgroundColor: '#ecfdf5', color: '#059669', padding: '6px 16px', borderRadius: '50px', fontSize: '14px', fontWeight: '700', border: '1px solid #d1fae5' }}>{new Date(record.date).toLocaleDateString()}</span>
+                                            </div>
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '16px' }}>
+                                                <div style={{ color: '#475569' }}>🔍 <strong>Шинж тэмдэг:</strong> {record.symptoms}</div>
+                                                <div style={{ color: '#475569' }}>📋 <strong>Онош:</strong> <span style={{ color: '#dc2626', fontWeight: '700' }}>{record.diagnosis}</span></div>
+                                                <div style={{ color: '#475569' }}>💊 <strong>Эмчилгээ:</strong> <span style={{ color: '#2563eb', fontWeight: '600' }}>{record.treatment}</span></div>
+                                                
+                                                {record.treatments && record.treatments.length > 0 && (
+                                                    <div style={{ marginTop: '10px' }}>
+                                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '5px' }}>
+                                                            {record.treatments.map((t, idx) => (
+                                                                <span key={idx} style={{
+                                                                    backgroundColor: '#e0f2fe',
+                                                                    color: '#0369a1',
+                                                                    padding: '4px 12px',
+                                                                    borderRadius: '50px',
+                                                                    fontSize: '13px',
+                                                                    fontWeight: '600',
+                                                                    border: '1px solid #bae6fd'
+                                                                }}>
+                                                                    ✅ {t}
+                                                                </span>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {record.doctorName && <div style={{ fontSize: '14px', color: '#94a3b8', marginTop: '15px', fontStyle: 'italic', borderTop: '1px solid #f1f5f9', paddingTop: '15px', display: 'flex', alignItems: 'center', gap: '6px' }}>⚕️ Эмч: {record.doctorName}</div>}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
                             )}
                         </div>
                     </div>
-                </div>
 
-                <div style={{ marginTop: '20px', backgroundColor: '#fff', padding: '35px', borderRadius: '32px', boxShadow: '0 8px 30px rgba(0,0,0,0.05)', border: '1px solid #f0f0f0' }}>
-                    <h3 style={{ borderBottom: '3px solid #27ae60', paddingBottom: '15px', color: '#2c3e50', marginBottom: '30px', fontSize: '24px', fontWeight: '700' }}>🩺 Эмнэлгийн түүх</h3>
-                    
-                    {petRecords.length === 0 ? (
-                        <div style={{ padding: '50px', backgroundColor: '#f9fafb', borderRadius: '20px', textAlign: 'center', color: '#94a3b8', border: '2px dashed #e2e8f0', fontSize: '18px' }}>
-                            🏥 Одоогоор эмнэлгийн түүх байхгүй байна.
-                        </div>
-                    ) : (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                            {petRecords.map(record => (
-                                <div key={record._id} style={{ padding: '25px', backgroundColor: 'white', borderRadius: '20px', borderLeft: '8px solid #27ae60', boxShadow: '0 4px 12px rgba(0,0,0,0.03)', borderTop: '1px solid #f8fafc', borderRight: '1px solid #f8fafc', borderBottom: '1px solid #f8fafc' }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px', flexWrap: 'wrap', gap: '10px' }}>
-                                        <strong style={{ fontSize: '20px', color: '#1e293b' }}>👨‍⚕️ Эмчийн тэмдэглэл</strong>
-                                        <span style={{ backgroundColor: '#ecfdf5', color: '#059669', padding: '6px 16px', borderRadius: '50px', fontSize: '14px', fontWeight: '700', border: '1px solid #d1fae5' }}>{new Date(record.date).toLocaleDateString()}</span>
-                                    </div>
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '16px' }}>
-                                        <div style={{ color: '#475569' }}>🔍 <strong>Шинж тэмдэг:</strong> {record.symptoms}</div>
-                                        <div style={{ color: '#475569' }}>📋 <strong>Онош:</strong> <span style={{ color: '#dc2626', fontWeight: '700' }}>{record.diagnosis}</span></div>
-                                        <div style={{ color: '#475569' }}>💊 <strong>Эмчилгээ:</strong> <span style={{ color: '#2563eb', fontWeight: '600' }}>{record.treatment}</span></div>
-                                        {record.doctorName && <div style={{ fontSize: '14px', color: '#94a3b8', marginTop: '15px', fontStyle: 'italic', borderTop: '1px solid #f1f5f9', paddingTop: '15px', display: 'flex', alignItems: 'center', gap: '6px' }}>⚕️ Эмч: {record.doctorName}</div>}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    )}
+                    {/* Right Column: Appointment Booking */}
+                    <div id="booking-section" style={{ flex: '1 1 400px', position: 'sticky', top: '20px' }}>
+                        <AppointmentForm 
+                            ownerId={user._id} 
+                            defaultPetName={selectedPet.name}
+                            onAppointmentAdded={() => fetchAppointments(user._id)}
+                        />
+                    </div>
                 </div>
             </div>
         );

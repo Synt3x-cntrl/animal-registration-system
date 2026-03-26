@@ -1,4 +1,5 @@
 const DoctorSchedule = require("../models/DoctorSchedule");
+const { cleanupExpiredData } = require("../utils/cleanup");
 
 exports.createSchedule = async (req, res, next) => {
     try {
@@ -32,13 +33,14 @@ exports.createSchedule = async (req, res, next) => {
     } catch (error) {
         res.status(400).json({
             success: false,
-            error: error.message,
+            error: "Хуваарь үүсгэхэд алдаа гарлаа",
         });
     }
 };
 
 exports.getDoctorSchedules = async (req, res, next) => {
     try {
+        await cleanupExpiredData();
         let query = { doctorId: req.params.doctorId };
         if (req.query.isBooked !== undefined) {
             query.isBooked = req.query.isBooked === 'true';
@@ -54,7 +56,7 @@ exports.getDoctorSchedules = async (req, res, next) => {
     } catch (error) {
         res.status(400).json({
             success: false,
-            error: error.message,
+            error: "Хуваарь татахад алдаа гарлаа",
         });
     }
 };
