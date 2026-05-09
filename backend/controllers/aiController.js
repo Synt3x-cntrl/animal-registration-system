@@ -26,7 +26,9 @@ exports.chatWithAI = async (req, res) => {
 
         // Хэрэв OpenAI Key байхгүй бол Simulated AI ажиллуулна
         if (!openai) {
-            let simulatedReply = "Сайн байна уу! Би Amitani Delguur-ийн туслах байна. Одоогоор би 'Demo' горимд ажиллаж байна. Та Gmail-ээр нэвтэрвэл би таны календартай холбогдож цаг захиалж өгч чадна.";
+            let simulatedReply = userId 
+                ? "Сайн байна уу! Би Amitani Delguur-ийн туслах байна. Та Gmail-ээр амжилттай нэвтэрсэн байна. Би одоогоор 'Demo' горимд байгаа ч таны календартай холбогдож ажиллахад бэлэн!"
+                : "Сайн байна уу! Би Amitani Delguur-ийн туслах байна. Одоогоор би 'Demo' горимд ажиллаж байна. Та Gmail-ээр нэвтэрвэл би таны календартай холбогдож цаг захиалж өгч чадна.";
             
             const msg = message.toLowerCase();
             if (msg.includes("завтай") || msg.includes("цаг") || msg.includes("өдөр")) {
