@@ -8,8 +8,7 @@ function Login() {
   const [upass, setPass] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
 
-  // Түр зуур hardcode хийж Environment Variable-ийн асуудлыг шалгана
-  const GOOGLE_CLIENT_ID = "311946659040-uvm88bhd0g0bpme9u3elr07a1amlhi73.apps.googleusercontent.com";
+  const GOOGLE_CLIENT_ID = process.env.REACT_APP_GOOGLE_CLIENT_ID;
 
   useEffect(() => {
     console.log("Debug: Google Client ID is:", GOOGLE_CLIENT_ID);
