@@ -21,13 +21,24 @@ try {
  */
 exports.chatWithAI = async (req, res) => {
     try {
+        const { message, userId } = req.body;
+
+        // Хэрэв OpenAI Key байхгүй бол Simulated AI ажиллуулна
         if (!openai) {
-            return res.status(500).json({
-                success: false,
-                error: "OpenAI API Key тохируулагдаагүй байна."
+            console.log("Using Simulated AI Mode...");
+            let simulatedReply = "Сайн байна уу! Би Amitani Delguur-ийн туслах байна. Одоогоор би 'Demo' горимд ажиллаж байна. Та Gmail-ээр нэвтэрвэл би таны календартай холбогдож цаг захиалж өгч чадна.";
+            
+            if (message.includes("завтай") || message.includes("цаг")) {
+                simulatedReply = "Танд маргааш 14:00 болон 16:30 цагуудад сул цаг байна. Та захиалахыг хүсэж байна уу?";
+            } else if (message.includes("захиалах") || message.includes("авъя")) {
+                simulatedReply = "Таны цагийг амжилттай захиаллаа! (Demo горим)";
+            }
+
+            return res.status(200).json({
+                success: true,
+                reply: simulatedReply
             });
         }
-        const { message, userId } = req.body;
         let user = null;
         if (userId) {
             user = await User.findById(userId);
