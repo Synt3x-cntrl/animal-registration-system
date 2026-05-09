@@ -1,6 +1,7 @@
 const { OpenAI } = require('openai');
 const User = require('../models/User');
 const Appointment = require('../models/Appointment');
+const MedicalRecord = require('../models/MedicalRecord');
 const { getBusySlots, createCalendarEvent } = require('../utils/googleCalendar');
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '../config/config.env') });
@@ -32,6 +33,8 @@ exports.chatWithAI = async (req, res) => {
                 simulatedReply = "Танд маргааш 14:00 болон 16:30 цагуудад сул цаг байна. Та захиалахыг хүсэж байна уу?";
             } else if (msg.includes("захиалах") || msg.includes("авъя") || msg.includes("тийм")) {
                 simulatedReply = "Таны цагийг амжилттай захиаллаа! (Demo горимд таны Calendar дээр event үүсэхгүй болохыг анхаарна уу. Жинхэнэ захиалга хийхийн тулд OpenAI Key тохируулах шаардлагатай).";
+            } else if (msg.includes("тэмдэглэл") || msg.includes("онош") || msg.includes("бич")) {
+                simulatedReply = "Амьтны үзлэгийн тэмдэглэлийг амжилттай хадгаллаа! Онош: Ханиад, Эмчилгээ: Сироп уулгах. (Demo горим)";
             }
 
             return res.status(200).json({
@@ -84,6 +87,24 @@ exports.chatWithAI = async (req, res) => {
                             required: ["summary", "startTime", "endTime"]
                         }
                     }
+                },
+                {
+                    type: "function",
+                    function: {
+                        name: "saveMedicalRecord",
+                        description: "Амьтны үзлэгийн тэмдэглэл болон оношийг хадгална",
+                        parameters: {
+                            type: "object",
+                            properties: {
+                                petName: { type: "string", description: "Амьтны нэр" },
+                                diagnosis: { type: "string", description: "Онош" },
+                                treatment: { type: "string", description: "Эмчилгээний заавар" },
+                                notes: { type: "string", description: "Нэмэлт тэмдэглэл" },
+                                followUpDate: { type: "string", description: "Давтан үзлэгийн огноо (YYYY-MM-DD)" }
+                            },
+                            required: ["petName", "diagnosis", "treatment"]
+                        }
+                    }
                 }
             ],
             tool_choice: "auto",
@@ -128,6 +149,21 @@ exports.chatWithAI = async (req, res) => {
                     });
 
                     functionResponse = `Амьтны цаг амжилттай захиалагдлаа. Calendar дээр нэмэгдсэн.`;
+                }
+            } else if (functionName === "saveMedicalRecord") {
+                if (!user) {
+                    functionResponse = "Хэрэглэгч нэвтрээгүй байна. Тэмдэглэл хадгалахын тулд заавал нэвтэрнэ үү.";
+                } else {
+                    // Энд Pet-ийг нэрээр нь хайж олох логик нэмж болно, эсвэл шууд хадгална
+                    await MedicalRecord.create({
+                        petId: req.body.petId || user._id, // Жишээ болгож
+                        ownerId: user._id,
+                        diagnosis: args.diagnosis,
+                        treatment: args.treatment,
+                        notes: args.notes,
+                        followUpDate: args.followUpDate
+                    });
+                    functionResponse = `${args.petName}-ийн үзлэгийн тэмдэглэлийг амжилттай хадгаллаа. Онош: ${args.diagnosis}`;
                 }
             }
 
