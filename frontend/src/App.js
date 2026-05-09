@@ -20,7 +20,7 @@ import Pricing from "./pages/Pricing";
 import Navbar from "./components/Navbar";
 import Sidebar from "./components/Sidebar";
 import AIChatBot from "./components/AIChatBot";
-import { SpeedInsights } from "@vercel/speed-insights/react";
+// SpeedInsights removed for build stability
 
 function Layout({ children }) {
   const location = useLocation();
@@ -96,7 +96,6 @@ function App() {
           <Route path="/pricing" element={<Pricing />} />
         </Routes>
       </Layout>
-      <SpeedInsights />
     </BrowserRouter>
   );
 }
