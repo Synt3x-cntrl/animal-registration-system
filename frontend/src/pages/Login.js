@@ -12,27 +12,39 @@ function Login() {
   const GOOGLE_CLIENT_ID = "311946659040-t7au41c420l7gmn4251sojq7eutd5l3r.apps.googleusercontent.com";
 
   useEffect(() => {
-    console.log("Debug: Google Client ID is:", GOOGLE_CLIENT_ID);
     /* global google */
     if (window.google) {
-      google.accounts.id.initialize({
+      const client = google.accounts.oauth2.initCodeClient({
         client_id: GOOGLE_CLIENT_ID,
-        callback: handleGoogleResponse
+        scope: 'openid email profile https://www.googleapis.com/auth/calendar',
+        ux_mode: 'popup',
+        callback: (response) => {
+          if (response.code) {
+            handleGoogleResponse(response.code);
+          }
+        },
       });
 
-      google.accounts.id.renderButton(
-        document.getElementById("google-btn-container"),
-        { theme: "outline", size: "large", width: "100%" }
-      );
+      const googleBtn = document.getElementById("google-btn-container");
+      if (googleBtn) {
+        // Түр зуур товчлуурын харагдацыг засна
+        googleBtn.innerHTML = `
+          <button style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px; padding: 12px; border: 1px solid #ddd; border-radius: 8px; background: white; cursor: pointer; font-family: inherit; font-size: 16px;">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_Logo.svg" alt="Google" style="width: 20px; height: 20px;" />
+            Google-ээр нэвтрэх
+          </button>
+        `;
+        googleBtn.onclick = () => client.requestCode();
+      }
     }
-  }, []);
+  }, [GOOGLE_CLIENT_ID]);
 
-  const handleGoogleResponse = async (response) => {
+  const handleGoogleResponse = async (code) => {
     try {
       const res = await fetch(`${API_URL}/auth/google`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ idToken: response.credential })
+        body: JSON.stringify({ code })
       });
 
       const data = await res.json();
