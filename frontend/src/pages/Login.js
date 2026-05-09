@@ -11,6 +11,7 @@ function Login() {
   const GOOGLE_CLIENT_ID = process.env.REACT_APP_GOOGLE_CLIENT_ID;
 
   useEffect(() => {
+    console.log("Debug: Google Client ID is:", GOOGLE_CLIENT_ID);
     /* global google */
     if (window.google) {
       google.accounts.id.initialize({
