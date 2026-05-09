@@ -25,13 +25,13 @@ exports.chatWithAI = async (req, res) => {
 
         // Хэрэв OpenAI Key байхгүй бол Simulated AI ажиллуулна
         if (!openai) {
-            console.log("Using Simulated AI Mode...");
             let simulatedReply = "Сайн байна уу! Би Amitani Delguur-ийн туслах байна. Одоогоор би 'Demo' горимд ажиллаж байна. Та Gmail-ээр нэвтэрвэл би таны календартай холбогдож цаг захиалж өгч чадна.";
             
-            if (message.includes("завтай") || message.includes("цаг")) {
+            const msg = message.toLowerCase();
+            if (msg.includes("завтай") || msg.includes("цаг") || msg.includes("өдөр")) {
                 simulatedReply = "Танд маргааш 14:00 болон 16:30 цагуудад сул цаг байна. Та захиалахыг хүсэж байна уу?";
-            } else if (message.includes("захиалах") || message.includes("авъя")) {
-                simulatedReply = "Таны цагийг амжилттай захиаллаа! (Demo горим)";
+            } else if (msg.includes("захиалах") || msg.includes("авъя") || msg.includes("тийм")) {
+                simulatedReply = "Таны цагийг амжилттай захиаллаа! (Demo горимд таны Calendar дээр event үүсэхгүй болохыг анхаарна уу. Жинхэнэ захиалга хийхийн тулд OpenAI Key тохируулах шаардлагатай).";
             }
 
             return res.status(200).json({
