@@ -12,31 +12,42 @@ function Login() {
   const GOOGLE_CLIENT_ID = "311946659040-t7au41c420l7gmn4251sojq7eutd5l3r.apps.googleusercontent.com";
 
   useEffect(() => {
-    /* global google */
-    if (window.google) {
-      const client = google.accounts.oauth2.initCodeClient({
-        client_id: GOOGLE_CLIENT_ID,
-        scope: 'openid email profile https://www.googleapis.com/auth/calendar',
-        ux_mode: 'popup',
-        callback: (response) => {
-          if (response.code) {
-            handleGoogleResponse(response.code);
-          }
-        },
-      });
+    const initGoogle = () => {
+      /* global google */
+      if (window.google && window.google.accounts) {
+        console.log("Google library ready. Initializing...");
+        const client = google.accounts.oauth2.initCodeClient({
+          client_id: GOOGLE_CLIENT_ID,
+          scope: 'openid email profile https://www.googleapis.com/auth/calendar',
+          ux_mode: 'popup',
+          callback: (response) => {
+            console.log("Google response received:", response);
+            if (response.code) {
+              handleGoogleResponse(response.code);
+            }
+          },
+        });
 
-      const googleBtn = document.getElementById("google-btn-container");
-      if (googleBtn) {
-        // Түр зуур товчлуурын харагдацыг засна
-        googleBtn.innerHTML = `
-          <button style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px; padding: 12px; border: 1px solid #ddd; border-radius: 8px; background: white; cursor: pointer; font-family: inherit; font-size: 16px;">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_Logo.svg" alt="Google" style="width: 20px; height: 20px;" />
-            Google-ээр нэвтрэх
-          </button>
-        `;
-        googleBtn.onclick = () => client.requestCode();
+        const googleBtn = document.getElementById("google-btn-container");
+        if (googleBtn) {
+          googleBtn.innerHTML = `
+            <button id="real-google-btn" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px; padding: 12px; border: 1px solid #ddd; border-radius: 8px; background: white; cursor: pointer; font-family: inherit; font-size: 16px; transition: all 0.2s;">
+              <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_Logo.svg" alt="Google" style="width: 20px; height: 20px;" />
+              Google-ээр нэвтрэх
+            </button>
+          `;
+          document.getElementById("real-google-btn").onclick = () => {
+            console.log("Google button clicked, requesting code...");
+            client.requestCode();
+          };
+        }
+      } else {
+        console.log("Google library not ready, retrying in 500ms...");
+        setTimeout(initGoogle, 500);
       }
-    }
+    };
+
+    initGoogle();
   }, [GOOGLE_CLIENT_ID]);
 
   const handleGoogleResponse = async (code) => {
