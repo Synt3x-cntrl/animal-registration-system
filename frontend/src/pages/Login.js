@@ -8,7 +8,8 @@ function Login() {
   const [upass, setPass] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
 
-  const GOOGLE_CLIENT_ID = process.env.REACT_APP_GOOGLE_CLIENT_ID;
+  // Шинэ ID-г шууд хатуу бичив (Vercel Build-ийн асуудлаас сэргийлж)
+  const GOOGLE_CLIENT_ID = "311946659040-t7au41c420l7gmn4251sojq7eutd5l3r.apps.googleusercontent.com";
 
   useEffect(() => {
     console.log("Debug: Google Client ID is:", GOOGLE_CLIENT_ID);
