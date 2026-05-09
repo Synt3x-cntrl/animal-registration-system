@@ -7,6 +7,9 @@ const UserSchema = new mongoose.Schema({
     phone: { type: String },
     password: { type: String },
     role: { type: String, default: 'user' },
+    googleId: { type: String },
+    googleRefreshToken: { type: String },
+    imageUrl: { type: String },
     createdAt: { type: Date, default: Date.now }
 });
 

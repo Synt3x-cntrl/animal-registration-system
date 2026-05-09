@@ -35,6 +35,7 @@ app.use("/api/v1/notifications", notificationsRouter);
 app.use("/api/v1/doctor-schedules", doctorSchedulesRouter);
 app.use("/api/v1/daily-summaries", dailySummariesRouter);
 app.use("/api/v1/stats", require("./Routes/stats"));
+app.use("/api/v1/ai", require("./Routes/ai"));
 
 // Health check route - Real DB probe
 app.get("/api/v1/health", async (req, res) => {

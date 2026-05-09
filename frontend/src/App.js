@@ -19,6 +19,7 @@ import Pricing from "./pages/Pricing";
 
 import Navbar from "./components/Navbar";
 import Sidebar from "./components/Sidebar";
+import AIChatBot from "./components/AIChatBot";
 
 function Layout({ children }) {
   const location = useLocation();
@@ -44,6 +45,7 @@ function Layout({ children }) {
       <div className="public-layout" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
         <Navbar />
         {children}
+        <AIChatBot />
       </div>
     );
   }
@@ -66,6 +68,7 @@ function Layout({ children }) {
           {children}
         </div>
       </div>
+      <AIChatBot />
     </>
   );
 }

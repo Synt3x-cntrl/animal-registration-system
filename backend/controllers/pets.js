@@ -100,9 +100,9 @@ exports.getAllPets = async (req, res, next) => {
 exports.deletePet = async (req, res, next) => {
     try {
         const petId = req.params.id;
-        
+
         await Pet.findByIdAndDelete(petId);
-        
+
         res.status(200).json({
             success: true,
             data: {},
@@ -152,7 +152,7 @@ exports.requestPassport = async (req, res, next) => {
         if (!pet) {
             return res.status(404).json({ success: false, error: "Амьтан олдсонгүй" });
         }
-        
+
         if (pet.passportStatus !== 'none' && pet.passportStatus !== 'rejected') {
             return res.status(400).json({ success: false, error: "Пасспорт аль хэдийн хүсэлт илгээгдсэн эсвэл зөвшөөрөгдсөн байна" });
         }
@@ -169,7 +169,7 @@ exports.requestPassport = async (req, res, next) => {
 exports.getPassportRequests = async (req, res, next) => {
     try {
         const pets = await Pet.find({ passportStatus: 'requested' }).populate('owner', 'firstname lastname phone email');
-        
+
         res.status(200).json({ success: true, count: pets.length, data: pets });
     } catch (error) {
         res.status(400).json({ success: false, error: error.message });

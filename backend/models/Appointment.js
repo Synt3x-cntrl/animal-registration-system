@@ -10,6 +10,7 @@ const AppointmentSchema = new mongoose.Schema({
     ownerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     doctorId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, // Optional for non-medical services
     scheduleId: { type: mongoose.Schema.Types.ObjectId, ref: 'DoctorSchedule' },
+    googleEventId: { type: String },
     createdAt: { type: Date, default: Date.now }
 });
 

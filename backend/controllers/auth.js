@@ -195,30 +195,64 @@ exports.getAdminStats = async (req, res, next) => {
 
 exports.googleLogin = async (req, res, next) => {
     try {
-        const { idToken } = req.body;
+        const { code, idToken } = req.body;
 
-        if (!idToken) {
-            return res.status(400).json({ success: false, error: "Token шаардлагатай" });
+        if (!idToken && !code) {
+            return res.status(400).json({ success: false, error: "Token эсвэл Code шаардлагатай" });
         }
 
-        const ticket = await client.verifyIdToken({
-            idToken,
-            audience: process.env.GOOGLE_CLIENT_ID,
-        });
+        let email, firstname, lastname, picture, googleId;
+        let refreshToken = null;
 
-        const { email, given_name, family_name, picture } = ticket.getPayload();
+        // If authorization code is provided, exchange it for tokens (to get refresh_token)
+        if (code) {
+            const { tokens } = await client.getToken({
+                code,
+                redirect_uri: 'postmessage' // Frontend-ээс ирэх үед 'postmessage' ашигладаг
+            });
+            client.setCredentials(tokens);
+            refreshToken = tokens.refresh_token;
+
+            const ticket = await client.verifyIdToken({
+                idToken: tokens.id_token,
+                audience: process.env.GOOGLE_CLIENT_ID,
+            });
+            const payload = ticket.getPayload();
+            email = payload.email;
+            firstname = payload.given_name;
+            lastname = payload.family_name || "";
+            picture = payload.picture;
+            googleId = payload.sub;
+        } else {
+            // Basic idToken verification
+            const ticket = await client.verifyIdToken({
+                idToken,
+                audience: process.env.GOOGLE_CLIENT_ID,
+            });
+            const payload = ticket.getPayload();
+            email = payload.email;
+            firstname = payload.given_name;
+            lastname = payload.family_name || "";
+            picture = payload.picture;
+            googleId = payload.sub;
+        }
 
         let user = await User.findOne({ email });
 
         if (!user) {
-            // Create user if not exists
             user = await User.create({
-                firstname: given_name,
-                lastname: family_name || "",
+                firstname,
+                lastname,
                 email,
                 role: "user",
-                imageUrl: picture
+                imageUrl: picture,
+                googleId,
+                googleRefreshToken: refreshToken
             });
+        } else if (refreshToken) {
+            // Update refresh token if we got a new one
+            user.googleRefreshToken = refreshToken;
+            await user.save();
         }
 
         const userObj = user.toObject();
@@ -233,7 +267,7 @@ exports.googleLogin = async (req, res, next) => {
         console.error("Google login error:", error);
         res.status(400).json({
             success: false,
-            error: "Google нэвтрэлт амжилтгүй боллоо"
+            error: "Google нэвтрэлт амжилтгүй боллоо: " + error.message
         });
     }
 };
