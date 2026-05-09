@@ -31,21 +31,24 @@ const AIChatBot = () => {
         setIsLoading(true);
 
         try {
-            // Орон нутгийн storage-оос хэрэглэгчийн мэдээллийг авна (Login хийсэн бол)
             const userData = JSON.parse(localStorage.getItem('user'));
             
-            const response = await axios.post(`${API_URL}/ai/chat`, {
+            // API_URL нь төгсгөлдөө '/' -гүй байгаа эсэхийг шалгаад холбоно
+            const url = `${API_URL}/ai/chat`.replace(/([^:]\/)\/+/g, "$1");
+            
+            const response = await axios.post(url, {
                 message: input,
-                userId: userData?._id // Нэвтэрсэн хэрэглэгчийн ID
+                userId: userData?._id
             });
 
             const aiMessage = { role: 'assistant', content: response.data.reply };
             setMessages(prev => [...prev, aiMessage]);
         } catch (error) {
-            console.error("Chat error:", error);
+            console.error("Chat error details:", error.response?.data || error.message);
+            const errorText = error.response?.data?.error || 'Уучлаарай, холболтонд алдаа гарлаа. Та интернэтээ эсвэл OpenAI Key-ээ шалгана уу.';
             const errorMessage = { 
                 role: 'assistant', 
-                content: 'Уучлаарай, холболтонд алдаа гарлаа. Та интернэтээ шалгана уу.' 
+                content: errorText
             };
             setMessages(prev => [...prev, errorMessage]);
         } finally {
