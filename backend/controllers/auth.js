@@ -4,7 +4,11 @@ const Appointment = require("../models/Appointment");
 const MedicalRecord = require("../models/MedicalRecord");
 const bcrypt = require("bcryptjs");
 const { OAuth2Client } = require("google-auth-library");
-const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+const client = new OAuth2Client(
+    process.env.GOOGLE_CLIENT_ID,
+    process.env.GOOGLE_CLIENT_SECRET,
+    'postmessage'
+);
 
 
 exports.register = async (req, res, next) => {
