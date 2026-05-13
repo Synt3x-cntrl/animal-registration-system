@@ -2,6 +2,7 @@ const { OpenAI } = require('openai');
 const User = require('../models/User');
 const Appointment = require('../models/Appointment');
 const MedicalRecord = require('../models/MedicalRecord');
+const DoctorSchedule = require('../models/DoctorSchedule');
 const { getBusySlots, createCalendarEvent } = require('../utils/googleCalendar');
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '../config/config.env') });
@@ -26,17 +27,32 @@ exports.chatWithAI = async (req, res) => {
 
         // Хэрэв OpenAI Key байхгүй бол Simulated AI ажиллуулна
         if (!openai) {
-            let simulatedReply = userId 
-                ? "Сайн байна уу! Би Amitani Delguur-ийн туслах байна. Та Gmail-ээр амжилттай нэвтэрсэн байна. Би одоогоор 'Demo' горимд байгаа ч таны календартай холбогдож ажиллахад бэлэн!"
-                : "Сайн байна уу! Би Amitani Delguur-ийн туслах байна. Одоогоор би 'Demo' горимд ажиллаж байна. Та Gmail-ээр нэвтэрвэл би таны календартай холбогдож цаг захиалж өгч чадна.";
-            
             const msg = message.toLowerCase();
-            if (msg.includes("завтай") || msg.includes("цаг") || msg.includes("өдөр")) {
-                simulatedReply = "Танд маргааш 14:00 болон 16:30 цагуудад сул цаг байна. Та захиалахыг хүсэж байна уу?";
+            let simulatedReply = "";
+
+            if (msg.includes("завтай") || msg.includes("цаг") || msg.includes("өдөр") || msg.includes("хэзээ")) {
+                // Эмч нарын оруулсан сул цагийг хайх
+                const availableSlots = await DoctorSchedule.find({ isBooked: false })
+                    .populate('doctorId', 'name')
+                    .sort({ date: 1 })
+                    .limit(5);
+
+                if (availableSlots.length > 0) {
+                    let slotsText = availableSlots.map(s => 
+                        `${s.date} (${s.doctorId ? s.doctorId.name : 'Эмч'})`
+                    ).join(", ");
+                    simulatedReply = `Одоогоор дараах сул цагууд байна: ${slotsText}. Та аль нэгийг нь сонгож захиалах уу?`;
+                } else {
+                    simulatedReply = "Уучлаарай, одоогоор эмч нарын оруулсан сул цаг байхгүй байна.";
+                }
             } else if (msg.includes("захиалах") || msg.includes("авъя") || msg.includes("тийм")) {
                 simulatedReply = "Таны цагийг амжилттай захиаллаа! (Demo горимд таны Calendar дээр event үүсэхгүй болохыг анхаарна уу. Жинхэнэ захиалга хийхийн тулд OpenAI Key тохируулах шаардлагатай).";
             } else if (msg.includes("тэмдэглэл") || msg.includes("онош") || msg.includes("бич")) {
                 simulatedReply = "Амьтны үзлэгийн тэмдэглэлийг амжилттай хадгаллаа! Онош: Ханиад, Эмчилгээ: Сироп уулгах. (Demo горим)";
+            } else {
+                simulatedReply = userId 
+                    ? "Сайн байна уу! Би Amitani Delguur-ийн туслах байна. Танд юугаар туслах вэ? Би эмч нарын хуваарийг шалгаж, цаг захиалж өгөх боломжтой."
+                    : "Сайн байна уу! Би Amitani Delguur-ийн туслах байна. Та Gmail-ээр нэвтэрвэл би таны календартай холбогдож, эмчийн цаг захиалж өгч чадна.";
             }
 
             return res.status(200).json({
@@ -53,7 +69,7 @@ exports.chatWithAI = async (req, res) => {
         const response = await openai.chat.completions.create({
             model: "gpt-4o",
             messages: [
-                { role: "system", content: "Чи бол Amitani Delguur-ийн ухаалаг туслах байна. Хэрэглэгчид цаг захиалахад тусалдаг. Google Calendar ашиглан сул цаг хайж, цаг захиалж өгнө. Монгол хэлээр харилцана." },
+                { role: "system", content: "Чи бол Amitani Delguur-ийн ухаалаг туслах байна. Хэрэглэгчид эмчийн цаг захиалахад тусалдаг. Эхлээд 'getAvailableDoctorSlots' ашиглан эмч нарын оруулсан сул цагуудыг шалгаж хэрэглэгчид санал болгоно. Хэрэв сул цаг байхгүй бол 'Уучлаарай, одоогоор эмч нарын оруулсан сул цаг байхгүй байна' гэж хэлнэ. Хэрэглэгч цагаа сонгосны дараа 'bookAppointment' ашиглан захиална. Мөн Google Calendar ашиглан сул цаг давхар шалгаж болно. Монгол хэлээр харилцана." },
                 { role: "user", content: message }
             ],
             tools: [
@@ -84,7 +100,8 @@ exports.chatWithAI = async (req, res) => {
                                 summary: { type: "string", description: "Захиалгын нэр (жишээ нь: Вакцин хийлгэх)" },
                                 startTime: { type: "string", description: "Эхлэх цаг (ISO string)" },
                                 endTime: { type: "string", description: "Дуусах цаг (ISO string)" },
-                                petName: { type: "string", description: "Амьтны нэр" }
+                                petName: { type: "string", description: "Амьтны нэр" },
+                                slotId: { type: "string", description: "Сонгосон хуваарийн ID (заавал биш)" }
                             },
                             required: ["summary", "startTime", "endTime"]
                         }
@@ -107,6 +124,17 @@ exports.chatWithAI = async (req, res) => {
                             required: ["petName", "diagnosis", "treatment"]
                         }
                     }
+                },
+                {
+                    type: "function",
+                    function: {
+                        name: "getAvailableDoctorSlots",
+                        description: "Эмч нарын оруулсан сул цагуудын жагсаалтыг авна",
+                        parameters: {
+                            type: "object",
+                            properties: {}
+                        }
+                    }
                 }
             ],
             tool_choice: "auto",
@@ -122,7 +150,22 @@ exports.chatWithAI = async (req, res) => {
 
             let functionResponse;
 
-            if (functionName === "checkAvailability") {
+            if (functionName === "getAvailableDoctorSlots") {
+                const slots = await DoctorSchedule.find({ isBooked: false })
+                    .populate('doctorId', 'name')
+                    .sort({ date: 1 })
+                    .limit(10);
+                
+                if (slots.length === 0) {
+                    functionResponse = "Одоогоор эмч нарын оруулсан сул цаг байхгүй байна.";
+                } else {
+                    functionResponse = JSON.stringify(slots.map(s => ({
+                        id: s._id,
+                        date: s.date,
+                        doctor: s.doctorId ? s.doctorId.name : 'Unknown'
+                    })));
+                }
+            } else if (functionName === "checkAvailability") {
                 if (!user || !user.googleRefreshToken) {
                     functionResponse = "Хэрэглэгч нэвтрээгүй байна. Хуанли шалгахын тулд заавал Gmail-ээр нэвтрэх шаардлагатай.";
                 } else {
@@ -140,6 +183,19 @@ exports.chatWithAI = async (req, res) => {
                         description: `Амьтны нэр: ${args.petName || 'Мэдэгдэхгүй'}`
                     });
 
+                    // Хэрэв тодорхой slotId өгөгдсөн бол түүнийг ашиглана, үгүй бол огноогоор хайж хаана
+                    let schedule = null;
+                    if (args.slotId) {
+                        schedule = await DoctorSchedule.findById(args.slotId);
+                    } else {
+                        schedule = await DoctorSchedule.findOne({ date: args.startTime, isBooked: false });
+                    }
+
+                    if (schedule) {
+                        schedule.isBooked = true;
+                        await schedule.save();
+                    }
+
                     // MongoDB дээр мөн хадгалах
                     await Appointment.create({
                         petName: args.petName || "Үл мэдэгдэх",
@@ -147,10 +203,12 @@ exports.chatWithAI = async (req, res) => {
                         date: args.startTime,
                         reason: args.summary,
                         ownerId: user._id,
-                        googleEventId: event.id
+                        doctorId: schedule ? schedule.doctorId : null,
+                        scheduleId: schedule ? schedule._id : null,
+                        googleEventId: event ? event.id : null
                     });
 
-                    functionResponse = `Амьтны цаг амжилттай захиалагдлаа. Calendar дээр нэмэгдсэн.`;
+                    functionResponse = `Амьтны цаг амжилттай захиалагдлаа. ${schedule ? 'Эмчийн хуваарь шинэчлэгдсэн.' : ''}`;
                 }
             } else if (functionName === "saveMedicalRecord") {
                 if (!user) {
