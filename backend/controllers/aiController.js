@@ -30,7 +30,11 @@ exports.chatWithAI = async (req, res) => {
             const msg = message.toLowerCase();
             let simulatedReply = "";
 
-            if (msg.includes("завтай") || msg.includes("цаг") || msg.includes("өдөр") || msg.includes("хэзээ")) {
+            // Илүү уян хатан хайлт (цаг, сул, завтай, хэзээ гэх мэт)
+            const scheduleKeywords = ["завтай", "цаг", "өдөр", "хэзээ", "hzee", "tsag", "zavtai", "shalgah", "avail"];
+            const bookKeywords = ["захиалах", "авъя", "авах", "zahialah", "avya", "book", "avah", "tiim", "тийм"];
+
+            if (scheduleKeywords.some(key => msg.includes(key))) {
                 // Эмч нарын оруулсан сул цагийг хайх
                 const availableSlots = await DoctorSchedule.find({ isBooked: false })
                     .populate('doctorId', 'name')
@@ -43,11 +47,11 @@ exports.chatWithAI = async (req, res) => {
                     ).join(", ");
                     simulatedReply = `Одоогоор дараах сул цагууд байна: ${slotsText}. Та аль нэгийг нь сонгож захиалах уу?`;
                 } else {
-                    simulatedReply = "Уучлаарай, одоогоор эмч нарын оруулсан сул цаг байхгүй байна.";
+                    simulatedReply = "Уучлаарай, одоогоор эмч нарын оруулсан сул цаг байхгүй байна. Та дараа дахин шалгана уу.";
                 }
-            } else if (msg.includes("захиалах") || msg.includes("авъя") || msg.includes("тийм")) {
+            } else if (bookKeywords.some(key => msg.includes(key))) {
                 simulatedReply = "Таны цагийг амжилттай захиаллаа! (Demo горимд таны Calendar дээр event үүсэхгүй болохыг анхаарна уу. Жинхэнэ захиалга хийхийн тулд OpenAI Key тохируулах шаардлагатай).";
-            } else if (msg.includes("тэмдэглэл") || msg.includes("онош") || msg.includes("бич")) {
+            } else if (msg.includes("тэмдэглэл") || msg.includes("онош") || msg.includes("бич") || msg.includes("save")) {
                 simulatedReply = "Амьтны үзлэгийн тэмдэглэлийг амжилттай хадгаллаа! Онош: Ханиад, Эмчилгээ: Сироп уулгах. (Demo горим)";
             } else {
                 simulatedReply = userId 
@@ -256,10 +260,10 @@ exports.chatWithAI = async (req, res) => {
         });
 
     } catch (error) {
-        console.error("AI Chat Error:", error);
+        console.error("AI Chat Error Details:", error);
         res.status(500).json({
             success: false,
-            error: "AI-тай харилцахад алдаа гарлаа"
+            error: "AI-тай харилцахад алдаа гарлаа: " + error.message
         });
     }
 };
