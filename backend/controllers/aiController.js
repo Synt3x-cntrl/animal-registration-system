@@ -3,20 +3,25 @@ const User = require('../models/User');
 const Appointment = require('../models/Appointment');
 const MedicalRecord = require('../models/MedicalRecord');
 const DoctorSchedule = require('../models/DoctorSchedule');
+const Pet = require('../models/Pet');
 const { getBusySlots, createCalendarEvent } = require('../utils/googleCalendar');
 const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '../config/config.env') });
 
 let openai;
-try {
-    if (process.env.OPENAI_API_KEY) {
-        openai = new OpenAI({
-            apiKey: process.env.OPENAI_API_KEY,
-        });
+const initOpenAI = () => {
+    if (!openai && process.env.OPENAI_API_KEY) {
+        try {
+            openai = new OpenAI({
+                apiKey: process.env.OPENAI_API_KEY,
+            });
+            console.log("OpenAI initialized successfully");
+        } catch (err) {
+            console.error("OpenAI initialization failed:", err.message);
+        }
     }
-} catch (err) {
-    console.error("OpenAI initialization failed:", err.message);
-}
+};
+initOpenAI();
 
 /**
  * AI Чат контроллер
@@ -24,6 +29,7 @@ try {
 exports.chatWithAI = async (req, res) => {
     try {
         const { message, userId } = req.body;
+        initOpenAI();
 
         // Хэрэв OpenAI Key байхгүй бол Simulated AI ажиллуулна
         if (!openai) {
@@ -31,14 +37,26 @@ exports.chatWithAI = async (req, res) => {
             let simulatedReply = "";
 
             // Илүү уян хатан хайлт (цаг, сул, завтай, хэзээ гэх мэт)
-            const scheduleKeywords = ["завтай", "цаг", "өдөр", "хэзээ", "hzee", "tsag", "zavtai", "shalgah", "avail"];
+            const scheduleKeywords = ["завтай", "цаг", "өдөр", "хэзээ", "hzee", "tsag", "zavtai", "shalgah", "avail", "маргааш", "өнөөдөр", "margaash", "unoodor"];
             const bookKeywords = ["захиалах", "авъя", "авах", "zahialah", "avya", "book", "avah", "tiim", "тийм", "songoh", "сонгох", "zahialya", "захиалъя"];
 
-            // Хэрэв хэрэглэгч шууд огноо бичсэн бол (жишээ нь: 2026-05...)
+            // Хэрэв хэрэглэгч шууд огноо бичсэн бол (жишээ нь: 2026-05...) эсвэл 'маргааш' гэх мэт
             const isDateInput = msg.includes("202") && msg.includes("-");
+            const isNaturalTime = msg.includes("маргааш") || msg.includes("өнөөдөр") || msg.includes("margaash") || msg.includes("unoodor");
 
-            if (bookKeywords.some(key => msg.includes(key)) || isDateInput) {
-                simulatedReply = "Таны цагийг амжилттай захиаллаа! (Demo горимд таны Calendar дээр event үүсэхгүй болохыг анхаарна уу. Жинхэнэ захиалга хийхийн тулд OpenAI Key тохируулах шаардлагатай).";
+            if (bookKeywords.some(key => msg.includes(key)) || isDateInput || (isNaturalTime && msg.includes("10"))) {
+                // Амьтан шалгах
+                let petInfo = "";
+                if (userId) {
+                    const pets = await Pet.find({ owner: userId });
+                    if (pets.length > 1 && !msg.includes(pets[0].name.toLowerCase()) && !msg.includes(pets[1].name.toLowerCase())) {
+                        simulatedReply = `Танд ${pets.length} амьтан байна. Аль амьтан дээрээ захиалах вэ? (${pets.map(p => p.name).join(", ")})`;
+                        return res.status(200).json({ success: true, reply: simulatedReply });
+                    }
+                    if (pets.length === 1) petInfo = `(${pets[0].name}-д)`;
+                }
+
+                simulatedReply = `Таны цагийг амжилттай захиаллаа! ${petInfo} (Demo горимд таны Calendar дээр event үүсэхгүй болохыг анхаарна уу. Жинхэнэ захиалга хийхийн тулд OpenAI Key тохируулах шаардлагатай).`;
             } else if (scheduleKeywords.some(key => msg.includes(key))) {
                 // Эмч нарын оруулсан сул цагийг хайх
                 const availableSlots = await DoctorSchedule.find({ isBooked: false })
@@ -48,7 +66,7 @@ exports.chatWithAI = async (req, res) => {
 
                 if (availableSlots.length > 0) {
                     let slotsText = availableSlots.map(s => 
-                        `${s.date} (${s.doctorId ? s.doctorId.firstname : 'Эмч'})`
+                        `${s.date.replace('T', ' ')} (${s.doctorId ? s.doctorId.firstname : 'Эмч'})`
                     ).join(", ");
                     simulatedReply = `Одоогоор дараах сул цагууд байна: ${slotsText}. Та аль нэгийг нь сонгож захиалах уу?`;
                 } else {
