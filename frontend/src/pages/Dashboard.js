@@ -99,7 +99,7 @@ function Dashboard() {
               <div>
                 <h3 style={{ margin: 0, color: '#2c3e50', fontSize: '18px' }}>Анхааруулга!</h3>
                 <p style={{ margin: '5px 0 0 0', color: '#27ae60', fontSize: '16px', fontWeight: 'bold' }}>
-                  Сайн байна уу, {user.firstname}! Таны '{stats.nextAppointmentPetName}' амьтны вакцин/үзлэг хийлгэхэд {stats.nextAppointmentDays} хоног үлдлээ.
+                  Сайн байна уу, {user.firstname}! Таны '{stats.nextAppointmentPetName}' амьтны вакцин/үзлэг хийлгэхэд {stats.nextAppointmentDays === 0 ? "Өнөөдөр" : stats.nextAppointmentDays === 1 ? "Маргааш" : `${stats.nextAppointmentDays} хоног`} үлдлээ.
                 </p>
               </div>
             </div>
@@ -136,8 +136,7 @@ function Dashboard() {
                     </div>
                     <div style={{ padding: '20px', backgroundColor: '#fff3cd', borderRadius: '24px', textAlign: 'center', boxShadow: '0 8px 30px rgba(0,0,0,0.08)' }}>
                       <div style={{ fontSize: '36px', fontWeight: 'bold', color: '#f39c12' }}>
-                        {stats.nextAppointmentDays !== null ? `${stats.nextAppointmentDays} ` : '—'}
-                        {stats.nextAppointmentDays !== null && <span style={{ fontSize: '16px' }}>хоног</span>}
+                        {stats.nextAppointmentDays === 0 ? "Өнөөдөр" : stats.nextAppointmentDays === 1 ? "Маргааш" : stats.nextAppointmentDays !== null ? `${stats.nextAppointmentDays} хоног` : '—'}
                       </div>
                       <div style={{ color: '#7f8c8d', fontSize: '15px', fontWeight: 'bold', marginTop: '5px' }}>Дараагийн уулзалт 🗓️</div>
                     </div>

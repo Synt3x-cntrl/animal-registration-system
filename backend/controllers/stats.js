@@ -24,7 +24,7 @@ exports.getUserStats = async (req, res) => {
             const nextDate = new Date(nextAppointment.date);
             const todayReset = new Date(today.getFullYear(), today.getMonth(), today.getDate());
             const diffTime = nextDate - todayReset;
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
             nextApptDiff = diffDays >= 0 ? diffDays : null;
         }
 
